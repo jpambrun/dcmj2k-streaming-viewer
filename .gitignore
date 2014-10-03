@@ -1,0 +1,10 @@
+*.j2k
+*.jp2
+*.jpc
+*.j2c
+*.swp
+node_modules/
+data/
+dist/
+bower_components/
+

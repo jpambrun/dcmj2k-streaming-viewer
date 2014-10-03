@@ -1,0 +1,30 @@
+{
+    "name": "jpx_js",
+    "version": "0.0.0",
+    "authors": [
+        "Jean-Francois Pambrun <jf.pambrun@gmail.com>"
+    ],
+    "description": "J2K JS viewer",
+    "main": "index.html",
+    "keywords": [
+        "DICOM",
+        "J2K"
+    ],
+    "license": "will se",
+    "private": true,
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "tests"
+    ],
+    "dependencies": {
+        "jquery": "~2.1.1",
+        "cornerstone": "git@github.com:jpambrun/cornerstone.git#~0.5.2",
+        "dicomParser": "~0.4.0",
+        "bootstrap-material-design": "*",
+        "cornerstoneTools": "~0.4.1",
+        "cornerstoneMath": "~0.1.0"
+    }
+}
