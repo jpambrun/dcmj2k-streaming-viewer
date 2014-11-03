@@ -3,7 +3,28 @@
 	[
 		{
 			"follow_symlinks": true,
-			"path": "."
-		}
+			"path": "./ext/cornerstone",
+      "name": "cornerstone",
+      "folder_exclude_patterns": ["node_modules", "build", "dist"],
+      "file_exclude_patterns": [".git", "LICENSE"],
+		},
+
+    {
+      "follow_symlinks": true,
+      "path": ".",
+      "name": "jpx",
+      "folder_exclude_patterns": ["ext", "build", "node_modules", "bower_components", "data", "dist"],
+      "file_exclude_patterns": [".git", "LICENSE"],
+    },
+    {
+      "follow_symlinks": true,
+      "path": "./ext/cornerstone/src",
+      "name": "cornerstone/src",
+    },
+    {
+      "follow_symlinks": true,
+      "path": "./src",
+      "name": "jpx/src",
+    },
 	]
 }

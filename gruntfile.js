@@ -58,10 +58,10 @@ module.exports = function(grunt) {
                     src: ['bower_components/dicomParser/dist/dicomParser.min.js'],
                     dest: 'dist/js/dicomparser.js'
                 }, {
-                    src: ['bower_components/cornerstone/dist/cornerstone.min.js'],
+                    src: ['ext/cornerstone/dist/cornerstone.min.js'],
                     dest: 'dist/js/cornerstone.js'
                 }, {
-                    src: ['bower_components/cornerstone/dist/cornerstone.min.css'],
+                    src: ['ext/cornerstone/dist/cornerstone.min.css'],
                     dest: 'dist/js/cornerstone.css'
                 }, {
                     src: ['bower_components/cornerstoneTools/dist/cornerstoneTools.min.js'],
@@ -97,10 +97,10 @@ module.exports = function(grunt) {
                     src: ['**'],
                     dest: 'dist/fonts/'
                 }, {
-                    src: ['bower_components/cornerstone/dist/cornerstone.js'],
+                    src: ['ext/cornerstone/dist/cornerstone.js'],
                     dest: 'dist/js/cornerstone.js'
                 }, {
-                    src: ['bower_components/cornerstone/dist/cornerstone.css'],
+                    src: ['ext/cornerstone/dist/cornerstone.css'],
                     dest: 'dist/js/cornerstone.css'
                 }, {
                     src: ['bower_components/dicomParser/dist/dicomParser.js'],

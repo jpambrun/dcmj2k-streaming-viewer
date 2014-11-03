@@ -21,7 +21,6 @@
     ],
     "dependencies": {
         "jquery": "~2.1.1",
-        "cornerstone": "git@github.com:jpambrun/cornerstone.git#~0.5.2",
         "dicomParser": "~0.4.0",
         "bootstrap-material-design": "*",
         "cornerstoneTools": "~0.4.1",
