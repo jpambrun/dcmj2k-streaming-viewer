@@ -88,14 +88,13 @@
         var jelement = $("#im1");
         var element = jelement.get(0);
         if (currentImage < maxImage) {
-            var image = cornerstone.imageCache.getImagePromise(urls[currentImage + 1]);
-            if (image !== undefined) {
+            var image = cornerstone.loadAndCacheImage(urls[currentImage + 1]).then(function(image){
                 currentImage += 1;
                 changeImage(jelement, element, image);
                 if (currentImage === maxImage) {
                     $('#nextbtn').addClass('disabled');
                 }
-            }
+            });
         }
     }
 
@@ -104,14 +103,13 @@
         var jelement = $("#im1");
         var element = jelement.get(0);
         if (currentImage > 0) {
-            var image = cornerstone.imageCache.getImagePromise(urls[currentImage - 1]);
-            if (image !== undefined) {
+            var image = cornerstone.loadAndCacheImage(urls[currentImage - 1]).then(function(image){
                 currentImage -= 1;
                 changeImage(jelement, element, image);
                 if (currentImage === 0) {
                     $('#prevbtn').addClass('disabled');
                 }
-            }
+            });
         }
     }
 
@@ -126,12 +124,16 @@
 
     function setupDicomViewer() {
         cornerstone.imageCache.setMaximumSizeBytes(500 * 1024 * 1024);
+        cornerstoneDCMJ2KImageLoader.setCallback(loaderInc);
         //  cornerstone.registerImageLoader('jpc', jpxLoadImage);
         for (var i = 0; i <= maxImage; i++) {
             var s = "000000000" + i;
             var filename = "http://jpx.jfpb.net/data/" + s.substr(s.length - 6) + ".dcm";
-            urls.push(filename);
-            loadImage(urls[i], loaderInc);
+            urls.push("dcmj2k:" + filename);
+               console.log("load "+ urls[i]);
+            cornerstone.loadAndCacheImage(urls[i]).then(function(image){
+               console.log("loaded "+ image.imageId);
+            });
         }
         var jelement = $("#im1");
         var element = jelement.get(0);
@@ -215,11 +217,11 @@
                 var totalDownloadTime = 0;
                 var totalDecodeTime = 0;
                 for (var i = 0; i <= maxImage; i++) {
-                    var image = cornerstone.imageCache.getImagePromise(urls[i]);
+                    var image = cornerstone.loadAndCacheImage(urls[i]).then(function(image){
                     totalSize += image.compressedFileSize;
                     totalDownloadTime += image.downloadTime;
                     totalDecodeTime += image.decodingTime;
-                }
+                });
                 var cacheInfo = cornerstone.imageCache.getCacheInfo();
 
                 $('#innerStats').html(
@@ -232,41 +234,31 @@
                 );
                 $('#statsModal').modal('show');
             }
-        });
+        }
+    });
 
 
         //load first
-        setTimeout(function() {
-            var image = cornerstone.imageCache.getImagePromise(urls[0]);
-            if (image !== undefined) {
-                firstImageTime = Date.now();
-                changeImage(jelement, element, image);
-                cornerstoneTools.mouseInput.enable(element);
-                cornerstoneTools.mouseWheelInput.enable(element);
-                // Enable all tools we want to use with this element
-                cornerstoneTools.wwwc.activate(element, 1); // ww/wc is the default tool for left mouse button
-                cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
-                cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
-                cornerstoneTools.probe.enable(element);
-                cornerstoneTools.length.enable(element);
-                cornerstoneTools.ellipticalRoi.enable(element);
-                cornerstoneTools.rectangleRoi.enable(element);
-                cornerstoneTools.angle.enable(element);
+        cornerstone.loadAndCacheImage(urls[0]).then(function(image) {
+            firstImageTime = Date.now();
+            changeImage(jelement, element, image);
+            cornerstoneTools.mouseInput.enable(element);
+            cornerstoneTools.mouseWheelInput.enable(element);
+            // Enable all tools we want to use with this element
+            cornerstoneTools.wwwc.activate(element, 1); // ww/wc is the default tool for left mouse button
+            cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
+            cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
+            cornerstoneTools.probe.enable(element);
+            cornerstoneTools.length.enable(element);
+            cornerstoneTools.ellipticalRoi.enable(element);
+            cornerstoneTools.rectangleRoi.enable(element);
+            cornerstoneTools.angle.enable(element);
 
-                cornerstoneTools.touchInput.enable(element);
-                cornerstoneTools.zoomTouchPinch.activate(element);
-                cornerstoneTools.wwwcTouchDrag.activate(element);
-
-
-            } else {
-                setTimeout(arguments.callee, 25);
-            }
-        }, 25);
-
-
-
+            cornerstoneTools.touchInput.enable(element);
+            cornerstoneTools.zoomTouchPinch.activate(element);
+            cornerstoneTools.wwwcTouchDrag.activate(element);
+        });
     }
-
 
     $(document).ready(function() {
         pageReadyTime = Date.now();
