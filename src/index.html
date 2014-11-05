@@ -88,8 +88,8 @@
         var jelement = $("#im1");
         var element = jelement.get(0);
         if (currentImage < maxImage) {
-            var image = cornerstone.loadAndCacheImage(urls[currentImage + 1]).then(function(image){
-                currentImage += 1;
+            currentImage += 1;
+            var image = cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image){
                 changeImage(jelement, element, image);
                 if (currentImage === maxImage) {
                     $('#nextbtn').addClass('disabled');
@@ -103,8 +103,8 @@
         var jelement = $("#im1");
         var element = jelement.get(0);
         if (currentImage > 0) {
-            var image = cornerstone.loadAndCacheImage(urls[currentImage - 1]).then(function(image){
-                currentImage -= 1;
+            currentImage -= 1;
+            var image = cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image){
                 changeImage(jelement, element, image);
                 if (currentImage === 0) {
                     $('#prevbtn').addClass('disabled');
@@ -130,10 +130,7 @@
             var s = "000000000" + i;
             var filename = "http://jpx.jfpb.net/data/" + s.substr(s.length - 6) + ".dcm";
             urls.push("dcmj2k:" + filename);
-               console.log("load "+ urls[i]);
-            cornerstone.loadAndCacheImage(urls[i]).then(function(image){
-               console.log("loaded "+ image.imageId);
-            });
+            cornerstone.loadAndCacheImage(urls[i]);
         }
         var jelement = $("#im1");
         var element = jelement.get(0);

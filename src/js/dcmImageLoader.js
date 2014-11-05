@@ -57,7 +57,6 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
                 patientName: parsedDicomData.patientName,
                 sliceLocation: parsedDicomData.sliceLocation,
             };
-            console.log("resolve "+ image.imageId);
             dcmdlworkerDeferred[imageId].resolve(image);
 
             if(imageLoaderCallback !== undefined){
