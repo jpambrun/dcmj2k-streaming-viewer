@@ -27,7 +27,7 @@
     <script src="./js/dicomparser.js" type="text/javascript"></script>
     <!-- include the hammer.js library for touch gestures-->
     <script type="text/javascript">
-    var maxImage = 298;
+    var maxImage = 748;
     var progress = 0;
     var currentImage = 0;
     var urls = [];
@@ -123,7 +123,7 @@
     }
 
     function setupDicomViewer() {
-        cornerstone.imageCache.setMaximumSizeBytes(500 * 1024 * 1024);
+        cornerstone.imageCache.setMaximumSizeBytes(1000 * 1024 * 1024);
         cornerstoneDCMJ2KImageLoader.setCallback(loaderInc);
         //  cornerstone.registerImageLoader('jpc', jpxLoadImage);
         for (var i = 0; i <= maxImage; i++) {
