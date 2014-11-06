@@ -70,7 +70,7 @@
 
     function changeImage(jelement, element, image) {
         cornerstone.displayImage(element, image);
-        jelement.find(".topleft").html('Patient Name: ' + image.patientName + '</br>SomeOtherField: multi-line test');
+        jelement.find(".topleft").html('Patient Name: ' + image.patientName + '<br>SomeOtherField: multi-line test');
         jelement.find(".bottomleft").text(image.sliceLocation);
     }
 
@@ -222,12 +222,12 @@
                 var cacheInfo = cornerstone.imageCache.getCacheInfo();
 
                 $('#innerStats').html(
-                    "Total Downlaod time: {0} s (Avr: {1} ms) </br>".format((totalDownloadTime / 1000).toFixed(2), (totalDownloadTime / progress).toFixed(2)) +
-                    "Total Decode time: {0} s (Avr: {1} ms) </br>".format((totalDecodeTime / 1000).toFixed(2), (totalDecodeTime / progress).toFixed(2)) +
-                    "Total size: {0} mb (Avr: {1} kb) </br>".format((totalSize / 1024).toFixed(2), (totalSize / progress).toFixed(2)) +
-                    "Time to first slice: {0} ms </br>".format((firstImageTime - pageReadyTime).toFixed(2)) +
-                    "Time to finish: {0} ms </br>".format((decodeCompleteTime - pageReadyTime).toFixed(2)) +
-                    "{0} image(s) in cache using {1} mb of a maximum of {2} mb </br>".format(cacheInfo.numberOfImagesCached, (cacheInfo.cacheSizeInBytes / 1024 / 1024).toFixed(0), (cacheInfo.maximumSizeInBytes / 1024 / 1024).toFixed(0))
+                    "Total Downlaod time: {0} s (Avr: {1} ms) <br>".format((totalDownloadTime / 1000).toFixed(2), (totalDownloadTime / progress).toFixed(2)) +
+                    "Total Decode time: {0} s (Avr: {1} ms) <br>".format((totalDecodeTime / 1000).toFixed(2), (totalDecodeTime / progress).toFixed(2)) +
+                    "Total size: {0} mb (Avr: {1} kb) <br>".format((totalSize / 1024).toFixed(2), (totalSize / progress).toFixed(2)) +
+                    "Time to first slice: {0} ms <br>".format((firstImageTime - pageReadyTime).toFixed(2)) +
+                    "Time to finish: {0} ms <br>".format((decodeCompleteTime - pageReadyTime).toFixed(2)) +
+                    "{0} image(s) in cache using {1} mb of a maximum of {2} mb <br>".format(cacheInfo.numberOfImagesCached, (cacheInfo.cacheSizeInBytes / 1024 / 1024).toFixed(0), (cacheInfo.maximumSizeInBytes / 1024 / 1024).toFixed(0))
                 );
                 $('#statsModal').modal('show');
             }
@@ -294,14 +294,14 @@
                 <div class="row center-block">
                     <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2 text-right">
                         <button id="prevbtn" type="button" class="btn btn-default disabled">
-                            <span class="glyphicon glyphicon-chevron-left"></span>
+                            <span class="glyphicon glyphicon-chevron-left"/>
                         </button>
                     </div>
 
                     <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8 text-center">
                         <div class="btn-group ">
                             <button id="wlbtn" type="button" class="btn btn-primary">
-                                <span class="glyphicon icon-dicom-contrast">
+                                <span class="glyphicon icon-dicom-contrast"></span>
                             </button>
                             <button id="pickerbtn" type="button" class="btn btn-default">
                                 <span class="glyphicon glyphicon-screenshot"></span>
