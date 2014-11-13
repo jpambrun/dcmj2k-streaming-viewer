@@ -1,4 +1,4 @@
-/*global JpxImage, dicomParser*/
+/*global JpxImage, dicomParser, PDFJS, self, importScripts, XMLHttpRequest, Uint8Array*/
 'use strict';
 importScripts('jpx.js', 'util.js', 'arithmetic_decoder.js', 'dicomparser.js');
 
@@ -22,7 +22,7 @@ self.onmessage = function(e) {
         rescaleSlope: dataSet.floatString('x00281053'),
         sliceLocation: dataSet.floatString('x00201041'),
     };
-    var jpxData = dataSet.byteArray.subarray(dataSet.elements.x7fe00010.dataOffset + 16, dataSet.elements.x7fe00010.dataOffset + dataSet.elements.x7fe00010.length);
+    var jpxData = dataSet.byteArray.subarray(dataSet.elements.x7fe00010.dataOffset + 16, dataSet.elements.x7fe00010.dataOffset + dataSet.elements.x7fe00010.length-16);
 
     var dlTime = (endDlTime - startDlTime);
     var startDecodeTime = Date.now();

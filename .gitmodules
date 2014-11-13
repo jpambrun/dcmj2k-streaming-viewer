@@ -1,3 +1,4 @@
 [submodule "ext/cornerstone"]
 	path = ext/cornerstone
 	url = https://github.com/jpambrun/cornerstone.git
+  branch = myplayground
