@@ -170,7 +170,7 @@ module.exports = function(grunt) {
                     args: ['--chmod 775'],
                     src: "dist/",
                     dest: "~/www_jpx",
-                    host: "ovh",
+                    host: "do",
                     //delete: true // Careful this option could cause data loss, read the docs!
                 }
             }
