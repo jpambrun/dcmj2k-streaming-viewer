@@ -8,7 +8,7 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
     var dcmdlworkerDeferred={};
     var imageLoaderCallback;
     var workerCount = 0;
-    var numWorker = 4;
+    var numWorker = 8;
 
     if (dcmdlworker === undefined) {
             dcmdlworker = [];
