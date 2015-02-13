@@ -1,0 +1,2 @@
+* Update to cornerstoneTools 4.4. Bug in stack and touch input.
+* Update to bootstrap 3.3.+ but in modal backdrop.

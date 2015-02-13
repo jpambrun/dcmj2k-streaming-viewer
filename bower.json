@@ -20,10 +20,10 @@
         "tests"
     ],
     "dependencies": {
-        "jquery": "~2.1.1",
-        "dicomParser": "~0.4.0",
+        "jquery": "=2.1.1",
+        "dicomParser": "=0.4.0",
         "bootstrap-material-design": "*",
-        "cornerstoneTools": "~0.4.1",
-        "cornerstoneMath": "~0.1.0"
+        "cornerstoneTools": "=0.4.1",
+        "cornerstoneMath": "=0.1.1"
     }
 }
