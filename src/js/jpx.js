@@ -28,7 +28,7 @@ var JpxImage = (function JpxImageClosure() {
     'HH': 2
   };
   function JpxImage() {
-    this.failOnCorruptedImage = false;
+    this.failOnCorruptedImage = true;
   }
   JpxImage.prototype = {
     parse: function JpxImage_parse(data) {
@@ -380,15 +380,10 @@ var JpxImage = (function JpxImageClosure() {
             case 0xFF57: // Packet length, main header (PLM)
             case 0xFF58: // Packet length, tile-part header (PLT)
             case 0xFF64: // Comment (COM)
-              length = readUint16(data, position);
-              // skipping content
-              break;
             case 0xFF53: // Coding style component (COC)
               length = readUint16(data, position);
               // skipping content
               break;
-              //throw new Error('JPX Error: Codestream code 0xFF53 (COC) is ' +
-              //                'not implemented');
             default:
               throw new Error('JPX Error: Unknown codestream code: ' +
                               code.toString(16));
@@ -649,7 +644,7 @@ var JpxImage = (function JpxImageClosure() {
         }
         r = 0;
       }
-      throw new Error('JPX Error: Out of packets');
+      //throw new Error('JPX Error: Out of packets');
     };
   }
   function ResolutionLayerComponentPositionIterator(context) {
@@ -1099,6 +1094,10 @@ var JpxImage = (function JpxImageClosure() {
         skipBytes(4);
       }
       var packet = packetsIterator.nextPacket();
+      if(packet===undefined){
+        //needed when no exception is raised when Out of packet is reached.
+        return;
+      }
       if (!readBits(1)) {
         continue;
       }
