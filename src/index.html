@@ -60,7 +60,6 @@
         cornerstoneTools.touchDragTool(stackOnDrag).deactivate(element);
         cornerstoneTools.panTouchDrag.deactivate(element);
         cornerstoneTools.wwwcTouchDrag.deactivate(element);
-        cornerstoneTools.wwwc.deactivate(element);
         cornerstoneTools.pan.activate(element, 2); // 2 is middle mouse button
         cornerstoneTools.zoom.activate(element, 4); // 4 is right mouse button
         cornerstoneTools.probe.deactivate(element, 1);
@@ -151,7 +150,6 @@
             var jelement = $("#im1");
             var element = jelement.get(0);
             disableAllTools(element);
-            cornerstoneTools.wwwc.activate(element, 1);
             cornerstoneTools.wwwcTouchDrag.activate(element);
         });
 
@@ -242,7 +240,6 @@
             cornerstoneTools.mouseInput.enable(element);
             cornerstoneTools.mouseWheelInput.enable(element);
             // Enable all tools we want to use with this element
-            cornerstoneTools.wwwc.activate(element, 1); // ww/wc is the default tool for left mouse button
             cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
             cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
             cornerstoneTools.probe.enable(element);
