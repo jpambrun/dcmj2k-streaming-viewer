@@ -27,13 +27,14 @@
     <script src="./js/dicomparser.js" type="text/javascript"></script>
     <!-- include the hammer.js library for touch gestures-->
     <script type="text/javascript">
-    var maxImage = 748;
+    var maxImage = 100;//748;
     var progress = 0;
     var currentImage = 0;
     var urls = [];
     var pageReadyTime = 0;
     var firstImageTime = 0;
     var decodeCompleteTime = 0;
+    var viewTimerId;
 
     if (!String.prototype.format) {
         String.prototype.format = function() {
@@ -67,10 +68,26 @@
         cornerstoneTools.angle.deactivate(element, 1);
     }
 
-    function changeImage(jelement, element, image) {
+    function changeImage(jelement, element, image, imageId) {
         cornerstone.displayImage(element, image);
-        jelement.find(".topleft").html('Patient Name: ' + image.patientName + '<br>SomeOtherField: multi-line test');
-        jelement.find(".bottomleft").text(image.sliceLocation);
+        jelement.find(".topleft").html('Patient Name: ' + image.parsedDicomData.patientName + '<br>SomeOtherField: multi-line test');
+        jelement.find(".bottomleft").text(image.parsedDicomData.sliceLocation);
+
+        window.clearTimeout(viewTimerId);
+
+        if (image.loadedLayers < image.parsedDicomData.numberOfLayers) {
+          var parsedId = parseImageId(imageId);
+          viewTimerId = window.setTimeout(function(msg) {
+            var newImageId = parsedId.scheme + ':' + parsedId.url + '?quality=' + (parsedId.requestedQuality + 1);
+            cornerstone.loadAndCacheImage(newImageId).then(function(updatedImage) {
+              currentParsedImageId = parseImageId(urls[currentImage]);
+              if ( currentParsedImageId.url  == parsedId.url) {
+                changeImage(jelement, element, updatedImage, imageId);
+              }
+            });
+          }, 1000, imageId);
+        }
+
     }
 
 
@@ -88,8 +105,8 @@
         var element = jelement.get(0);
         if (currentImage < maxImage) {
             currentImage += 1;
-            var image = cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image){
-                changeImage(jelement, element, image);
+            cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image){
+                changeImage(jelement, element, image, urls[currentImage]);
                 if (currentImage === maxImage) {
                     $('#nextbtn').addClass('disabled');
                 }
@@ -103,8 +120,8 @@
         var element = jelement.get(0);
         if (currentImage > 0) {
             currentImage -= 1;
-            var image = cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image){
-                changeImage(jelement, element, image);
+            cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image){
+                changeImage(jelement, element, image, urls[currentImage]);
                 if (currentImage === 0) {
                     $('#prevbtn').addClass('disabled');
                 }
@@ -127,7 +144,7 @@
         //  cornerstone.registerImageLoader('jpc', jpxLoadImage);
         for (var i = 0; i <= maxImage; i++) {
             var s = "000000000" + i;
-            var filename = "http://jpx.jfpb.net/data/" + s.substr(s.length - 6) + ".dcm";
+            var filename = "http://jpx.jfpb.net/data/" + s.substr(s.length - 6) + ".dcm?quality=1";
             urls.push("dcmj2k:" + filename);
             cornerstone.loadAndCacheImage(urls[i]);
         }
@@ -212,7 +229,7 @@
                 var totalDownloadTime = 0;
                 var totalDecodeTime = 0;
                 for (var i = 0; i <= maxImage; i++) {
-                    var image = cornerstone.loadAndCacheImage(urls[i]).then(function(image){
+                    cornerstone.loadAndCacheImage(urls[i]).then(function(image){
                     totalSize += image.compressedFileSize;
                     totalDownloadTime += image.downloadTime;
                     totalDecodeTime += image.decodingTime;
@@ -236,7 +253,7 @@
         //load first
         cornerstone.loadAndCacheImage(urls[0]).then(function(image) {
             firstImageTime = Date.now();
-            changeImage(jelement, element, image);
+            changeImage(jelement, element, image, urls[0]);
             cornerstoneTools.mouseInput.enable(element);
             cornerstoneTools.mouseWheelInput.enable(element);
             // Enable all tools we want to use with this element
