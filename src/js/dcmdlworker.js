@@ -89,12 +89,12 @@ self.onmessage = function(e) {
       jpxData = dcmData.subarray(parsedDicomData.imageBaseOffset, j2kStreamTruncationPoint);
       loadedLayers = 1;
     } else {
+      // its an update
       parsedDicomData = e.data.parsedDicomData;
-      // TODO: update data
       console.log('update data : ' + parsedId.url);
       var oldDcmData = new Uint8Array(e.data.oldDcmData);
       // TODO: check param e.data.layers.
-      j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + parsedDicomData.layers[parsedId.requestedQuality - 1];
+      j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + parsedDicomData.layers[parsedId.requestedQuality-1];
 
 
       xhr = new XMLHttpRequest();

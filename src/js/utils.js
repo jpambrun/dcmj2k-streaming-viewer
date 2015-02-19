@@ -35,6 +35,6 @@ function parseImageId(imageId) {
     return {
       scheme: scheme,
       url: url,
-      requestedQuality: requestedQuality,
+      requestedQuality: Number(requestedQuality),
     };
 }

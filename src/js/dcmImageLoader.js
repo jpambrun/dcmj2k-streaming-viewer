@@ -27,22 +27,26 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
 
         //is it already in cache?
         var cachedImagePromise;
-        try {
-          for (var i = parsedId.requestedQuality-1; i > 1; i--) {
-            //is the image already loaded.
-            cachedImagePromise = cornerstone.imageCache.getImagePromise(parsedId.scheme + ':' + parsedId.url + '?quality=i');
-            break;
-          }
-        } catch(e){
-          //it's ok, move along.
+        var i = parsedId.requestedQuality-1;
+        for (; i >= 1 && cachedImagePromise === undefined; i--) {
+          cachedImagePromise = cornerstone.imageCache.getImagePromise(parsedId.scheme + ':' + parsedId.url + '?quality=' + i);
         }
+        dcmdlworkerDeferred[imageId] = deferred;
 
         if (cachedImagePromise !== undefined) {
-          console.log('Update!');
+          cachedImagePromise.then(function (image){
+            var oldDcmData = new Uint8Array(image.getDcmData());
+
+            dcmdlworker[workerCount % numWorker].postMessage({
+              oldDcmData: oldDcmData,
+              imageId: imageId,
+              parsedDicomData: image.parsedDicomData,
+            }, [oldDcmData.buffer]);
+          });
+        } else {
+          dcmdlworker[workerCount % numWorker].postMessage({ imageId:imageId });
         }
 
-        dcmdlworkerDeferred[imageId] = deferred;
-        dcmdlworker[workerCount % numWorker].postMessage({ imageId:imageId });
         workerCount++;
         return deferred;
     }

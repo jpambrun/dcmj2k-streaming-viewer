@@ -78,11 +78,11 @@
         if (image.loadedLayers < image.parsedDicomData.numberOfLayers) {
           var parsedId = parseImageId(imageId);
           viewTimerId = window.setTimeout(function(msg) {
-            var newImageId = parsedId.scheme + ':' + parsedId.url + '?quality=' + (parsedId.requestedQuality + 1);
+            var newImageId = parsedId.scheme + ':' + parsedId.url + '?quality=' + (Number(parsedId.requestedQuality) + 1);
             cornerstone.loadAndCacheImage(newImageId).then(function(updatedImage) {
               currentParsedImageId = parseImageId(urls[currentImage]);
               if ( currentParsedImageId.url  == parsedId.url) {
-                changeImage(jelement, element, updatedImage, imageId);
+                changeImage(jelement, element, updatedImage, updatedImage.imageId);
               }
             });
           }, 1000, imageId);
