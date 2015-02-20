@@ -1,10 +1,21 @@
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
         // configure jshint to validate js files -----------------------------------
 
         clean: ['dist'],
 
+
+
+
+        jsbeautifier: {
+            files: ['gruntfile.js', 'src/**/*.js', 'src/**/*.html'],
+            options: {
+                js: {
+                    jslintHappy: true
+                }
+            }
+        },
 
         jshint: {
             options: {
@@ -25,18 +36,16 @@ module.exports = function(grunt) {
                 banner: '/*\n <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> \n*/\n'
             },
             prod: {
-                files: [
-                  {
+                files: [{
                     expand: true,
                     cwd: 'src/js',
                     src: '**/*.js',
                     dest: 'dist/js'
-                  }, {
+                }, {
                     expand: true,
                     src: 'ext/jpx-medical/*.js',
                     dest: 'dist/js'
-                  },
-                ]
+                }, ]
             }
         },
 
@@ -195,6 +204,7 @@ module.exports = function(grunt) {
     grunt.registerTask('prod', ['clean', 'uglify:prod', 'copy:prod', 'htmlmin:prod']);
     grunt.registerTask('up', ['prod', 'rsync:up']);
     grunt.registerTask('serv', ['dev', 'connect:serv', 'watch:serv']);
+    grunt.registerTask('beautify', ['jsbeautifier']);
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-connect');
@@ -204,6 +214,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-htmlmin');
     grunt.loadNpmTasks('grunt-rsync');
-
+    grunt.loadNpmTasks("grunt-jsbeautifier");
 
 };

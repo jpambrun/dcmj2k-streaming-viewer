@@ -12,10 +12,10 @@ function getUrlParameter(sParam) {
 
 
 function getParameterByName(url, name) {
-  name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-  var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-    results = regex.exec(url);
-  return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(url);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
 
@@ -27,14 +27,14 @@ function parseImageId(imageId) {
     var requestedQuality;
 
     if (qmarkIndex === -1) {
-      url = imageId.substring(colonIndex + 1);
+        url = imageId.substring(colonIndex + 1);
     } else {
-      url = imageId.substring(colonIndex + 1, qmarkIndex);
-      requestedQuality = getParameterByName(imageId, 'quality');
+        url = imageId.substring(colonIndex + 1, qmarkIndex);
+        requestedQuality = getParameterByName(imageId, 'quality');
     }
     return {
-      scheme: scheme,
-      url: url,
-      requestedQuality: Number(requestedQuality),
+        scheme: scheme,
+        url: url,
+        requestedQuality: Number(requestedQuality),
     };
 }
