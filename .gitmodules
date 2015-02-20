@@ -1,4 +1,4 @@
 [submodule "ext/cornerstone"]
 	path = ext/cornerstone
-	url = https://github.com/chafey/cornerstone.git
-  branch = master
+	url = git://github.com/jpambrun/cornerstone.git
+  branch = feat-updateImageInCache
