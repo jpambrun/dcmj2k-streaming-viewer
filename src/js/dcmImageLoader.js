@@ -6,17 +6,19 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
         cornerstoneDCMJ2KImageLoader = {};
     }
 
-    var dcmdlworker;
-    var dcmdlworkerDeferred={};
-    var imageLoaderCallback;
-    var workerCount = 0;
+    var workerPool;
+    var workerMessageQueue = [];
+    var workerReady = [];
+    var dcmdlworkerDeferred = {};
+    var statisticCallbacl;
     var numWorker = 8;
 
-    if (dcmdlworker === undefined) {
-            dcmdlworker = [];
+    if (workerPool === undefined) {
+            workerPool = [];
             for (var i = 0; i < numWorker; i++) {
-                dcmdlworker[i] = new Worker('js/dcmdlworker.js');
-                dcmdlworker[i].onmessage = handleWorkerMessage;
+                workerPool[i] = new Worker('js/dcmdlworker.js');
+                workerPool[i].onmessage = handleWorkerMessage;
+                workerReady[i] = true;
             }
     }
 
@@ -27,58 +29,48 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
 
         //is it already in cache?
         var cachedImagePromise;
-        var i = parsedId.requestedQuality-1;
-        for (; i >= 1 && cachedImagePromise === undefined; i--) {
+        for (var i = parsedId.requestedQuality-1; i >= 1 && cachedImagePromise === undefined; i--) {
           cachedImagePromise = cornerstone.imageCache.getImagePromise(parsedId.scheme + ':' + parsedId.url + '?quality=' + i);
         }
+
         dcmdlworkerDeferred[imageId] = deferred;
+        var firstAvailableWorker = workerReady.indexOf(true);
 
         if (cachedImagePromise !== undefined) {
           cachedImagePromise.then(function (image){
             var oldDcmData = new Uint8Array(image.getDcmData());
-
-            dcmdlworker[workerCount % numWorker].postMessage({
-              oldDcmData: oldDcmData,
-              imageId: imageId,
-              parsedDicomData: image.parsedDicomData,
-            }, [oldDcmData.buffer]);
+            var message = {
+                imageId: imageId,
+                parsedDicomData: image.parsedDicomData,
+                oldDcmData: oldDcmData,
+              };
+            if (firstAvailableWorker === -1) {
+              //start of queue, image updates are a priority
+              workerMessageQueue.unshift(message);
+            } else {
+              message.workerId = firstAvailableWorker;
+              workerReady[firstAvailableWorker] = false;
+              workerPool[firstAvailableWorker].postMessage( message,  [oldDcmData.buffer]);
+            }
           });
         } else {
-          dcmdlworker[workerCount % numWorker].postMessage({ imageId:imageId });
+            var message = {
+                imageId: imageId,
+              };
+            if (firstAvailableWorker === -1) {
+              // put at end of queue
+              workerMessageQueue.push(message);
+            } else {
+              message.workerId = firstAvailableWorker;
+              workerReady[firstAvailableWorker] = false;
+              workerPool[firstAvailableWorker].postMessage( message );
+            }
         }
 
-        workerCount++;
         return deferred;
     }
 
-
-    // update a image in cache with more quality layers
-    //function updateImage(imageId, privateData) {
-      //cornerstone.imageCache.getImagePromise(imageId).state()=="resolved"
-      //var deferred = $.Deferred();
-
-      //cornerstone.imageCache.getImagePromise(imageId).then(function(image) {
-        //var url = imageId;
-        //url = url.substring(7);
-        //var oldDcmData = new Uint8Array(image.getDcmData());
-
-        //dcmdlworkerDeferred[imageId] = deferred;
-
-        //dcmdlworker[workerCount % numWorker].postMessage({
-          //oldDcmData: oldDcmData,
-          //imageId: imageId,
-          //qualityLayer: privateData,
-          //parsedDicomData: image.parsedDicomData,
-        //}, [oldDcmData.buffer]);
-
-        //workerCount++;
-      //});
-
-      //return deferred;
-    //}
-
     function handleWorkerMessage(e){
-//      dcmdlworker[workerCount % numWorker].removeEventListener("message", arguments.callee, false);
       var pixelData = new Int16Array(e.data.pixelData);
       var dcmData = new Uint8Array(e.data.dcmData);
       var width = e.data.width;
@@ -118,24 +110,38 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
         parsedDicomData: parsedDicomData,
       };
 
-      if(imageLoaderCallback !== undefined){
-        imageLoaderCallback();
+      if(statisticCallbacl !== undefined){
+        statisticCallbacl();
       }
 
       var deferred = dcmdlworkerDeferred[imageId];
       delete dcmdlworkerDeferred[imageId];
+
+      // check is queue is empty
+      if (workerMessageQueue.length !== 0) {
+        var message = workerMessageQueue.shift();
+        message.workerId = e.data.workerId;
+        if (message.hasOwnProperty('oldDcmData')) {
+          workerPool[e.data.workerId].postMessage(message, [message.oldDcmData.buffer]);
+        } else {
+          workerPool[e.data.workerId].postMessage(message);
+        }
+      } else {
+        workerReady[e.data.workerId] = true;
+      }
+
       deferred.resolve(image);
     }
 
     function setCallback(callback){
-        imageLoaderCallback = callback;
+        statisticCallbacl = callback;
     }
 
     cornerstone.registerImageLoader('dcmj2k', loadImage);
-    //cornerstone.registerImageUpdater('dcmj2k', updateImage);
 
     // module exports
     cornerstoneDCMJ2KImageLoader.setCallback = setCallback;
 
     return cornerstoneDCMJ2KImageLoader;
 }($, cornerstone, cornerstoneDCMJ2KImageLoader));
+

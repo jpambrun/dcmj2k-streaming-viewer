@@ -128,6 +128,7 @@ self.onmessage = function(e) {
     var tileComponents = jpxImage.tiles[0];
     var pixelData = tileComponents.items;
     self.postMessage({
+        workerId: e.data.workerId,
         pixelData: pixelData.buffer,
         dcmData: dcmData.buffer,
         width: width,
