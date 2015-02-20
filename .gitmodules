@@ -2,3 +2,6 @@
 	path = ext/cornerstone
 	url = git://github.com/jpambrun/cornerstone.git
   branch = feat-updateImageInCache
+[submodule "ext/jpx-medical"]
+	path = ext/jpx-medical
+	url = git@github.com:jpambrun/jpx-medical.git

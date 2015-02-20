@@ -25,12 +25,18 @@ module.exports = function(grunt) {
                 banner: '/*\n <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> \n*/\n'
             },
             prod: {
-                files: [{
+                files: [
+                  {
                     expand: true,
                     cwd: 'src/js',
                     src: '**/*.js',
                     dest: 'dist/js'
-                }]
+                  }, {
+                    expand: true,
+                    src: 'ext/jpx-medical/*.js',
+                    dest: 'dist/js'
+                  },
+                ]
             }
         },
 
@@ -53,6 +59,7 @@ module.exports = function(grunt) {
                     expand: true,
                     cwd: 'src/fonts/',
                     src: ['**'],
+
                     dest: 'dist/fonts/'
                 }, {
                     src: ['bower_components/dicomParser/dist/dicomParser.min.js'],
@@ -115,6 +122,12 @@ module.exports = function(grunt) {
                     expand: true,
                     flatten: true,
                     src: ['src/js/*.js'],
+                    dest: 'dist/js/',
+                    filter: 'isFile'
+                }, {
+                    expand: true,
+                    flatten: true,
+                    src: ['ext/jpx-medical/*.js'],
                     dest: 'dist/js/',
                     filter: 'isFile'
                 }, {
