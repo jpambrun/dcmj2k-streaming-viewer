@@ -89,13 +89,14 @@
           var parsedId = parseImageId(imageId);
           viewTimerId = window.setTimeout(function(msg) {
             var newImageId = parsedId.scheme + ':' + parsedId.url + '?quality=' + (Number(parsedId.requestedQuality) + 1);
+            urls[currentImage] = newImageId;
             cornerstone.loadAndCacheImage(newImageId).then(function(updatedImage) {
               currentParsedImageId = parseImageId(urls[currentImage]);
               if ( currentParsedImageId.url  == parsedId.url) {
                 changeImage(jelement, element, updatedImage, updatedImage.imageId);
               }
             });
-          }, 500, imageId);
+          }, 200, imageId);
         }
 
     }
