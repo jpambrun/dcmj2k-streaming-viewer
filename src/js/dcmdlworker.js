@@ -10,7 +10,6 @@ self.onmessage = function (e) {
     var loadedLayers;
     var parsedDicomData;
     var jpxData;
-    var dlTime;
     var j2kStreamTruncationPoint;
     var xhr;
     var dcmData;
@@ -18,14 +17,23 @@ self.onmessage = function (e) {
     var deltaDcmData;
     var imageId = e.data.imageId;
     var parsedId = parseImageId(imageId);
+    var startTime;
+    var endTime;
+    var stats = {
+        downloadTime: 0,
+        dicomParseTime: 0,
+        j2kDecodeTime: 0,
+        fileSize: 0,
+        isUpdate: NaN,
+    };
 
 
     if (e.data.oldDcmData === undefined) {
+        stats.isUpdate = false;
         // no data from this image yet.
-        console.log('dl data : ' + parsedId.url);
 
+        startTime = Date.now();
         xhr = new XMLHttpRequest();
-        var startDlTime = Date.now();
         xhr.open("GET", parsedId.url, false); // false makes this synchronous
         xhr.setRequestHeader('Range', 'bytes=0-' + (prefetchSize - 1)); // the bytes (incl.) you request
         xhr.responseType = 'arraybuffer';
@@ -33,8 +41,13 @@ self.onmessage = function (e) {
         if (!(xhr.status === 200 || xhr.status === 206)) { // Throw an error if request failed
             throw Error(xhr.status + " " + xhr.statusText + ": " + parsedId.url);
         }
+        endTime = Date.now();
+        stats.downloadTime += (endTime - startTime);
 
+        stats.fileSize = xhr.response.byteLength;
         dcmData = new Uint8Array(xhr.response);
+
+        startTime = Date.now();
         var dataSet = dicomParser.parseDicom(dcmData);
 
         var numberOfLayers;
@@ -62,9 +75,12 @@ self.onmessage = function (e) {
             //TODO  will fail becuase dataSet.elements.x7fe00010.length is truncated length
             j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + dataSet.elements.x7fe00010.length - 16;
         }
+        endTime = Date.now();
+        stats.dicomParseTime += (endTime - startTime);
 
         if (j2kStreamTruncationPoint > dcmData.length) {
 
+            startTime = Date.now();
             xhr = new XMLHttpRequest();
             xhr.open("GET", parsedId.url, false); // false makes this synchronous
             xhr.responseType = 'arraybuffer';
@@ -73,7 +89,9 @@ self.onmessage = function (e) {
             if (xhr.status !== 206) { // Throw an error if request failed
                 throw Error(xhr.status + " " + xhr.statusText + ": " + parsedId.url);
             }
-
+            endTime = Date.now();
+            stats.downloadTime += (endTime - startTime);
+            stats.fileSize += xhr.response.byteLength;
             deltaDcmData = new Uint8Array(xhr.response);
             newDcmData = new Uint8Array(dcmData.length + deltaDcmData.length);
             newDcmData.set(dcmData, 0);
@@ -81,22 +99,18 @@ self.onmessage = function (e) {
             dcmData = newDcmData;
         }
 
-        var endDlTime = Date.now();
-
-
-        dlTime = (endDlTime - startDlTime);
-
         jpxData = dcmData.subarray(parsedDicomData.imageBaseOffset, j2kStreamTruncationPoint);
         loadedLayers = 1;
     } else {
+        stats.isUpdate = true;
         // its an update
         parsedDicomData = e.data.parsedDicomData;
-        console.log('update data : ' + parsedId.url);
         var oldDcmData = new Uint8Array(e.data.oldDcmData);
         // TODO: check param e.data.layers.
         j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + parsedDicomData.layers[parsedId.requestedQuality - 1];
 
 
+        startTime = Date.now();
         xhr = new XMLHttpRequest();
         xhr.open("GET", parsedId.url, false); // false makes this synchronous
         xhr.responseType = 'arraybuffer';
@@ -105,6 +119,10 @@ self.onmessage = function (e) {
         if (xhr.status !== 206) { // Throw an error if request failed
             throw Error(xhr.status + " " + xhr.statusText + ": " + parsedId.url);
         }
+        endTime = Date.now();
+        stats.downloadTime += (endTime - startTime);
+
+        stats.fileSize = xhr.response.byteLength;
 
         deltaDcmData = new Uint8Array(xhr.response);
         dcmData = new Uint8Array(oldDcmData.length + deltaDcmData.length);
@@ -115,12 +133,11 @@ self.onmessage = function (e) {
         loadedLayers = parsedId.requestedQuality;
     }
 
-    var startDecodeTime = Date.now();
+    startTime = Date.now();
     jpxImage.parse(jpxData);
-    var endDecodeTime = Date.now();
+    endTime = Date.now();
+    stats.j2kDecodeTime += (endTime - startTime);
 
-    var decodeTime = (endDecodeTime - startDecodeTime);
-    var fileSize = Math.round(jpxData.length / 1024);
     var width = jpxImage.width;
     var height = jpxImage.height;
     var componentsCount = jpxImage.componentsCount;
@@ -133,11 +150,9 @@ self.onmessage = function (e) {
         dcmData: dcmData.buffer,
         width: width,
         height: height,
-        fileSize: fileSize,
-        decodeTime: decodeTime,
-        downloadTime: dlTime,
         imageId: imageId,
         parsedDicomData: parsedDicomData,
         loadedLayers: loadedLayers,
+        stats: stats,
     }, [pixelData.buffer, dcmData.buffer]);
 };
