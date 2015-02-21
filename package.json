@@ -12,6 +12,7 @@
     "grunt-contrib-jshint": "^0.10.0",
     "grunt-contrib-uglify": "^0.6.0",
     "grunt-contrib-watch": "^0.6.1",
+    "grunt-jsbeautifier": "^0.2.8",
     "grunt-rsync": "^0.6.2",
     "jshint-stylish": "^1.0.0"
   }

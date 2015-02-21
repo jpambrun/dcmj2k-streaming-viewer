@@ -5,15 +5,23 @@ module.exports = function (grunt) {
 
         clean: ['dist'],
 
-
-
-
         jsbeautifier: {
-            files: ['gruntfile.js', 'src/**/*.js', 'src/**/*.html'],
-            options: {
-                js: {
-                    jslintHappy: true
+            "default": {
+                src: ['gruntfile.js', 'src/**/*.js', 'src/**/*.html'],
+                options: {
+                    js: {
+                        jslintHappy: true
+                    }
                 }
+            },
+            "precommit": {
+                src: ['gruntfile.js', 'src/**/*.js', 'src/**/*.html'],
+                options: {
+                    mode: "VERIFY_ONLY",
+                    js: {
+                        jslintHappy: true
+                    }
+                },
             }
         },
 
@@ -28,7 +36,7 @@ module.exports = function (grunt) {
             },
 
             // when this task is run, lint the Gruntfile and all js files in src
-            dev: ['Grunfile.js', 'src/js/**/*.js', '!src/js/jpx.js', '!src/js/util.js', '!src/js/arithmetic_decoder.js']
+            dev: ['Grunfile.js', 'src/js/**/*.js']
         },
 
         uglify: {
@@ -63,6 +71,19 @@ module.exports = function (grunt) {
         },
 
         copy: {
+            hooks: {
+                options: {
+                    mode: 0755,
+                },
+                files: [{
+                    expand: true,
+                    flatten: true,
+                    filter: 'isFile',
+                    src: ['githooks/*'],
+                    dest: '.git/hooks/',
+                    mode: '0755',
+                }],
+            },
             prod: {
                 files: [{
                     expand: true,
@@ -205,6 +226,8 @@ module.exports = function (grunt) {
     grunt.registerTask('up', ['prod', 'rsync:up']);
     grunt.registerTask('serv', ['dev', 'connect:serv', 'watch:serv']);
     grunt.registerTask('beautify', ['jsbeautifier']);
+    grunt.registerTask('hook', ['copy:hooks']);
+    grunt.registerTask('precommit', ['jsbeautifier:precommit', 'jshint:dev']);
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-connect');
