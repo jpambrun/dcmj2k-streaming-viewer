@@ -30,15 +30,21 @@ self.onmessage = function (e) {
 
     if (e.data.oldDcmData === undefined) {
         stats.isUpdate = false;
-        // no data from this image yet.
+        // no data from this image yet. We first download [prefetchSize] bytes and decode the
+        // DICOM header. If the private tags are not present we download the entire file.
+        // Otherwise, issue another partial request to fetch the first layer is we don't
+        // already have enough. The private tags are :
+        //   (0069,1012) truncation offset of layer 1 from the beginning of j2k codestream
+        //   (0069,1013) truncation offset of layer 2 from the beginning of j2k codestream
+        //   (0069,1013) truncation offset of layer 3 from the beginning of j2k codestream
 
         startTime = Date.now();
         xhr = new XMLHttpRequest();
-        xhr.open("GET", parsedId.url, false); // false makes this synchronous
-        xhr.setRequestHeader('Range', 'bytes=0-' + (prefetchSize - 1)); // the bytes (incl.) you request
+        xhr.open("GET", parsedId.url, false);
+        xhr.setRequestHeader('Range', 'bytes=0-' + (prefetchSize - 1));
         xhr.responseType = 'arraybuffer';
-        xhr.send(); // Blocks until response is complete
-        if (!(xhr.status === 200 || xhr.status === 206)) { // Throw an error if request failed
+        xhr.send();
+        if (!(xhr.status === 200 || xhr.status === 206)) {
             throw Error(xhr.status + " " + xhr.statusText + ": " + parsedId.url);
         }
         endTime = Date.now();
@@ -72,6 +78,8 @@ self.onmessage = function (e) {
             var layerOffset = parsedDicomData.layers[parsedId.requestedQuality - 1];
             j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + layerOffset;
         } else {
+            // TODO: testing required.
+            j2kStreamTruncationPoint = Infinity;
         }
         endTime = Date.now();
         stats.dicomParseTime += (endTime - startTime);
@@ -80,15 +88,15 @@ self.onmessage = function (e) {
 
             startTime = Date.now();
             xhr = new XMLHttpRequest();
-            xhr.open("GET", parsedId.url, false); // false makes this synchronous
+            xhr.open("GET", parsedId.url, false);
             xhr.responseType = 'arraybuffer';
-            xhr.send(); // Blocks until response is complete
-            if (xhr.status !== 206) { // Throw an error if request failed
             if (isFinite(j2kStreamTruncationPoint)) {
                 xhr.setRequestHeader('Range', 'bytes=' + prefetchSize + '-' + j2kStreamTruncationPoint);
             } else {
                 xhr.setRequestHeader('Range', 'bytes=' + prefetchSize + '-'); // download till EOF.
             }
+            xhr.send();
+            if (xhr.status !== 206) {
                 throw Error(xhr.status + " " + xhr.statusText + ": " + parsedId.url);
             }
             endTime = Date.now();
@@ -104,8 +112,9 @@ self.onmessage = function (e) {
         jpxData = dcmData.subarray(parsedDicomData.imageBaseOffset, j2kStreamTruncationPoint);
         loadedLayers = 1;
     } else {
+        // This is an update. The message contains the already downloaded data (oldDcmData).
+        // We just need to download the range between that and the next truncation point.
         stats.isUpdate = true;
-        // its an update
         parsedDicomData = e.data.parsedDicomData;
         var oldDcmData = new Uint8Array(e.data.oldDcmData);
         // TODO: check param e.data.layers.
@@ -114,11 +123,11 @@ self.onmessage = function (e) {
 
         startTime = Date.now();
         xhr = new XMLHttpRequest();
-        xhr.open("GET", parsedId.url, false); // false makes this synchronous
+        xhr.open("GET", parsedId.url, false);
         xhr.responseType = 'arraybuffer';
-        xhr.setRequestHeader('Range', 'bytes=' + oldDcmData.length + '-' + j2kStreamTruncationPoint); // the bytes (incl.) you request
-        xhr.send(); // Blocks until response is complete
-        if (xhr.status !== 206) { // Throw an error if request failed
+        xhr.setRequestHeader('Range', 'bytes=' + oldDcmData.length + '-' + j2kStreamTruncationPoint);
+        xhr.send();
+        if (xhr.status !== 206) {
             throw Error(xhr.status + " " + xhr.statusText + ": " + parsedId.url);
         }
         endTime = Date.now();

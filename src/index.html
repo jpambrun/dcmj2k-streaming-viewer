@@ -65,7 +65,7 @@
             } else if (deltaY <= -3) {
                 prevImage();
             }
-            return false; // false = cases jquery to preventDefault() and stopPropagation() this event
+            return false;
         }
 
 
@@ -84,7 +84,6 @@
             cornerstone.displayImage(element, image);
             jelement.find(".topleft").html('Patient Name: ' + image.parsedDicomData.patientName + '<br>SomeOtherField: multi-line test');
             jelement.find(".bottomleft").text(image.parsedDicomData.sliceLocation);
-            //jelement.find(".topright").text(image.loadedLayers + ' / ' +  image.parsedDicomData.numberOfLayers);
             if (image.loadedLayers !== image.parsedDicomData.numberOfLayers) {
                 if (image.loadedLayers === 1) {
                     jelement.find(".topright").html('<span style="font-size: 1.2em;color: #CC3300;" class="glyphicon glyphicon glyphicon-eye-close"></span>');
@@ -94,7 +93,6 @@
             } else {
                 jelement.find(".topright").html('<span style="font-size: 1.2em;" class="glyphicon glyphicon glyphicon-eye-open"></span>');
             }
-            //<span class="glyphicon glyphicon-screenshot"></span>
             window.clearTimeout(viewTimerId);
 
             if (image.loadedLayers < image.parsedDicomData.numberOfLayers) {
@@ -191,7 +189,7 @@
         function setupDicomViewer() {
             cornerstone.imageCache.setMaximumSizeBytes(1000 * 1024 * 1024);
             cornerstoneDCMJ2KImageLoader.setProgressCallback(progressCallback);
-            //  cornerstone.registerImageLoader('jpc', jpxLoadImage);
+            // This is just a demo, but I need to find a better way to pass images list.
             for (var i = 0; i <= maxImage; i++) {
                 var s = "000000000" + i;
                 var filename = "http://jpx.jfpb.net/data/" + s.substr(s.length - 6) + ".dcm?quality=1";
@@ -291,7 +289,6 @@
                 changeImage(jelement, element, image, urls[0]);
                 cornerstoneTools.mouseInput.enable(element);
                 cornerstoneTools.mouseWheelInput.enable(element);
-                // Enable all tools we want to use with this element
                 cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
                 cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
                 cornerstoneTools.probe.enable(element);
