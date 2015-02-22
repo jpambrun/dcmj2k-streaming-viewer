@@ -50,30 +50,28 @@ self.onmessage = function (e) {
         startTime = Date.now();
         var dataSet = dicomParser.parseDicom(dcmData);
 
-        var numberOfLayers;
-        for (var i = 1; i < 3 || dataSet.uint32('x0069101' + (i + 1)) !== 0; i++) {
-            numberOfLayers = i;
-        }
         parsedDicomData = {
             patientName: dataSet.string('x00100020'),
             rescaleIntercept: dataSet.floatString('x00281052'),
             rescaleSlope: dataSet.floatString('x00281053'),
             sliceLocation: dataSet.floatString('x00201041'),
-            numberOfLayers: numberOfLayers,
+            numberOfLayers: 1,
             imageBaseOffset: dataSet.elements.x7fe00010.dataOffset + 16,
-            layers: [
-                dataSet.uint32('x00691012'),
-                dataSet.uint32('x00691013'),
-                dataSet.uint32('x00691014')
-            ],
+            layers: [],
         };
 
         if (dataSet.elements.x00691011 !== undefined) {
+            for (var i = 1; i < 3 || dataSet.uint32('x0069101' + (i + 1)) !== 0; i++) {
+                parsedDicomData.numberOfLayers = i;
+            }
+            parsedDicomData.layers = [
+                dataSet.uint32('x00691012'),
+                dataSet.uint32('x00691013'),
+                dataSet.uint32('x00691014')
+            ];
             var layerOffset = parsedDicomData.layers[parsedId.requestedQuality - 1];
             j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + layerOffset;
         } else {
-            //TODO  will fail becuase dataSet.elements.x7fe00010.length is truncated length
-            j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + dataSet.elements.x7fe00010.length - 16;
         }
         endTime = Date.now();
         stats.dicomParseTime += (endTime - startTime);
@@ -84,9 +82,13 @@ self.onmessage = function (e) {
             xhr = new XMLHttpRequest();
             xhr.open("GET", parsedId.url, false); // false makes this synchronous
             xhr.responseType = 'arraybuffer';
-            xhr.setRequestHeader('Range', 'bytes=' + prefetchSize + '-' + j2kStreamTruncationPoint); // the bytes (incl.) you request
             xhr.send(); // Blocks until response is complete
             if (xhr.status !== 206) { // Throw an error if request failed
+            if (isFinite(j2kStreamTruncationPoint)) {
+                xhr.setRequestHeader('Range', 'bytes=' + prefetchSize + '-' + j2kStreamTruncationPoint);
+            } else {
+                xhr.setRequestHeader('Range', 'bytes=' + prefetchSize + '-'); // download till EOF.
+            }
                 throw Error(xhr.status + " " + xhr.statusText + ": " + parsedId.url);
             }
             endTime = Date.now();
