@@ -1,4 +1,4 @@
-A standard compliant dcm-j2k streaming viewer prototype.
+A standard compliant dcm-j2k streaming viewer prototype. See [demo](http://jpambrun.github.io).
 
 ## Dependencies
 [Modified PDF.js j2k decoder] (https://github.com/jpambrun/jpx-medical)
