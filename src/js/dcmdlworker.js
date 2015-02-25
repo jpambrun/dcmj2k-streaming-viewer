@@ -117,6 +117,8 @@ self.onmessage = function (e) {
                 xhr.setRequestHeader('Range', 'bytes=' + prefetchSize + '-' + j2kStreamTruncationPoint);
             } else {
                 xhr.setRequestHeader('Range', 'bytes=' + prefetchSize + '-'); // download till EOF.
+                // need to re-parse the dicom file to obtain the j2k end of stream position.
+                dataSet = dicomParser.parseDicom(dcmData);
             }
             xhr.send();
             if (xhr.status !== 206) {
@@ -130,6 +132,14 @@ self.onmessage = function (e) {
             newDcmData.set(dcmData, 0);
             newDcmData.set(deltaDcmData, dcmData.length);
             dcmData = newDcmData;
+
+
+            if (!isFinite(j2kStreamTruncationPoint)) {
+                // need to re-parse the dicom file to obtain the j2k end of stream position.
+                dataSet = dicomParser.parseDicom(dcmData);
+                j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + dataSet.elements.x7fe00010.length - 24;
+            }
+
         }
 
         jpxData = dcmData.subarray(parsedDicomData.imageBaseOffset, j2kStreamTruncationPoint);

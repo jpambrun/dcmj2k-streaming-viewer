@@ -123,8 +123,8 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
 
         var image = {
             imageId: imageId,
-            minPixelValue: -1100,
-            maxPixelValue: 2500,
+            minPixelValue: -2000,
+            maxPixelValue: 3500,
             windowCenter: -600,
             windowWidth: 1600,
             render: cornerstone.renderGrayscaleImage,
