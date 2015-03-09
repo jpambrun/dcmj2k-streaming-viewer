@@ -2,8 +2,13 @@ A standard compliant dcm-j2k streaming viewer prototype. See [demo](http://jpamb
 
 ## Dependencies
 [Modified PDF.js j2k decoder] (https://github.com/jpambrun/jpx-medical)
-
 [Cornerstones interactive medical images library] (https://github.com/jpambrun/cornerstone)
+
+```
+git submodule init
+git submodule update
+bower install
+```
 
 ## Streaming requirements
 The decoder need to know meaningfull j2k truncation points in order to enable streaming.
