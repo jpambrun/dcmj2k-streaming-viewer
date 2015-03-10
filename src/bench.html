@@ -1,0 +1,471 @@
+<!DOCTYPE HTML>
+<!--
+Copyright (c) 2015, Jean-Francois Pambrun
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-- >
+<html>
+
+<head>
+    <title>DICOM Viewer</title>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <!-- cornerstone css - provides some useful css classes -->
+<link href="./js/cornerstone.css" rel="stylesheet" type="text/css">
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+<link href="./css/paper.min.css" rel="stylesheet" type="text/css">
+<link href="./css/font.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+    body {
+        padding-top: 20px
+    }
+</style>
+
+
+<script src="//code.jquery.com/jquery-2.1.1.js" type="text/javascript"></script>
+<script src="//cdn.jsdelivr.net/jquery.hammerjs/1.1.2/jquery.hammer-full.min.js" type="text/javascript"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
+<script src="./js/cornerstone.js" type="text/javascript"></script>
+<script src="./js/cornerstonemath.js" type="text/javascript"></script>
+<script src="./js/cornerstonetools.js" type="text/javascript"></script>
+<script src="./js/utils.js" type="text/javascript"></script>
+<script src="./js/dcmImageLoader.js" type="text/javascript"></script>
+<script src="./js/dicomparser.js" type="text/javascript"></script>
+<!-- include the hammer.js library for touch gestures-->
+<script type="text/javascript">
+    var maxImage = 499; //748;
+    var currentImage = 0;
+    var urls = [];
+    var pageReadyTime = 0;
+    var viewTimerId;
+    var perfStats = {
+        requestStats: [],
+        progress: 0,
+        updateCount: 0,
+        firstImageTime: 0,
+        image300Time: 0,
+        decodeCompleteTime: NaN,
+        totalInitialSize: 0,
+        totalInitialDownloadTime: 0,
+        totalInitialDecodeTime: 0,
+        totalInitialDicomParsingTime: 0,
+        totalUpdateSize: 0,
+        totalUpdateDownloadTime: 0,
+        totalUpdateDecodeTime: 0,
+    };
+
+    if (!String.prototype.format) {
+        String.prototype.format = function() {
+            var args = arguments;
+            return this.replace(/{(\d+)}/g, function(match, number) {
+                return typeof args[number] != 'undefined' ? args[number] : match;
+            });
+        };
+    }
+
+    function stackOnDrag(e) {
+        var mouseMoveData = e.originalEvent.detail;
+        var deltaY = mouseMoveData.deltaPoints.page.y;
+        if (deltaY >= 3) {
+            nextImage();
+        } else if (deltaY <= -3) {
+            prevImage();
+        }
+        return false;
+    }
+
+
+    function disableAllTools(element) {
+        cornerstoneTools.touchDragTool(stackOnDrag).deactivate(element);
+        cornerstoneTools.panTouchDrag.deactivate(element);
+        cornerstoneTools.wwwcTouchDrag.deactivate(element);
+        cornerstoneTools.pan.activate(element, 2); // 2 is middle mouse button
+        cornerstoneTools.zoom.activate(element, 4); // 4 is right mouse button
+        cornerstoneTools.probe.deactivate(element, 1);
+        cornerstoneTools.length.deactivate(element, 1);
+        cornerstoneTools.angle.deactivate(element, 1);
+    }
+
+    function changeImage(jelement, element, image, imageId) {
+        cornerstone.displayImage(element, image);
+        jelement.find(".topleft").html('Patient Name: ' + image.parsedDicomData.patientName + '<br>SomeOtherField: multi-line test');
+        jelement.find(".bottomleft").text(image.parsedDicomData.sliceLocation);
+        if (image.loadedLayers !== image.parsedDicomData.numberOfLayers) {
+            if (image.loadedLayers === 1) {
+                jelement.find(".topright").html('<span style="font-size: 1.2em;color: #CC3300;" class="glyphicon glyphicon glyphicon-eye-close"></span>');
+            } else {
+                jelement.find(".topright").html('<span style="font-size: 1.2em;color: #FFD119;" class="glyphicon glyphicon glyphicon-eye-close"></span>');
+            }
+        } else {
+            jelement.find(".topright").html('<span style="font-size: 1.2em;" class="glyphicon glyphicon glyphicon-eye-open"></span>');
+        }
+        window.clearTimeout(viewTimerId);
+
+        if (image.loadedLayers < image.parsedDicomData.numberOfLayers && currentImage >= 300) {
+            var parsedId = parseImageId(imageId);
+            viewTimerId = window.setTimeout(function(msg) {
+                var newImageId = parsedId.scheme + ':' + parsedId.url + '?quality=' + (Number(parsedId.requestedQuality) + 1);
+                urls[currentImage] = newImageId;
+                cornerstone.loadAndCacheImage(newImageId).then(function(updatedImage) {
+                    currentParsedImageId = parseImageId(urls[currentImage]);
+                    if (currentParsedImageId.url == parsedId.url) {
+                        changeImage(jelement, element, updatedImage, updatedImage.imageId);
+                    }
+                });
+            }, 100, imageId);
+        }
+
+    }
+
+    function progressCallback(stats) {
+        perfStats.requestStats.push(stats);
+
+        if (!stats.isUpdate) {
+            perfStats.totalInitialSize += stats.fileSize;
+            perfStats.totalInitialDownloadTime += stats.downloadTime;
+            perfStats.totalInitialDecodeTime += stats.j2kDecodeTime;
+            perfStats.totalInitialDicomParsingTime += stats.dicomParseTime;
+            $('#progress-bar').width((++perfStats.progress / (maxImage - 1)) * 100 + '%');
+
+
+            if (currentImage < 300) {
+                perfStats.image300Time = Date.now();
+            }
+
+            if (perfStats.progress == maxImage - 1) {
+                $('#progress-bar-container').css('visibility', 'hidden');
+                perfStats.decodeCompleteTime = Date.now();
+            }
+        } else {
+            perfStats.totalUpdateSize += stats.fileSize;
+            perfStats.totalUpdateDownloadTime += stats.downloadTime;
+            perfStats.totalUpdateDecodeTime += stats.j2kDecodeTime;
+            perfStats.updateCount += 1;
+            console.log('update decode time : ' + stats.j2kDecodeTime);
+        }
+        var cacheInfo = cornerstone.imageCache.getCacheInfo();
+
+        $('#innerStats').html(
+            "Total initial downlaod time: {0} s (Avr: {1} ms) <br>".format((perfStats.totalInitialDownloadTime / 1000).toFixed(2), (perfStats.totalInitialDownloadTime / perfStats.progress).toFixed(2)) +
+            "Total initial dicom paring time: {0} s (Avr: {1} ms) <br>".format((perfStats.totalInitialDicomParsingTime / 1000).toFixed(2), (perfStats.totalInitialDicomParsingTime / perfStats.progress).toFixed(2)) +
+            "Total initial decode time: {0} s (Avr: {1} ms) <br>".format((perfStats.totalInitialDecodeTime / 1000).toFixed(2), (perfStats.totalInitialDecodeTime / perfStats.progress).toFixed(2)) +
+            "Total initial size: {0} mb (Avr: {1} kb) <br>".format((perfStats.totalInitialSize / 1024 / 1024).toFixed(2), (perfStats.totalInitialSize / 1024 / perfStats.progress).toFixed(2)) +
+            "Total update downlaod time: {0} s (Avr: {1} ms) <br>".format((perfStats.totalUpdateDownloadTime / 1000).toFixed(2), (perfStats.totalUpdateDownloadTime / perfStats.updateCount).toFixed(2)) +
+            "Total update decode time: {0} s (Avr: {1} ms) <br>".format((perfStats.totalUpdateDecodeTime / 1000).toFixed(2), (perfStats.totalUpdateDecodeTime / perfStats.updateCount).toFixed(2)) +
+            "Total update size: {0} mb (Avr: {1} kb) <br>".format((perfStats.totalUpdateSize / 1024 / 1024).toFixed(2), (perfStats.totalUpdateSize / 1024 / perfStats.updateCount).toFixed(2)) +
+            "Time to first slice: {0} ms <br>".format((perfStats.firstImageTime - pageReadyTime).toFixed(2)) +
+            "Time to 300th slice: {0} ms <br>".format((perfStats.image300Time - pageReadyTime).toFixed(2)) +
+            "Time to finish initial downlaod and decode for all slices : {0} ms <br>".format((perfStats.decodeCompleteTime - pageReadyTime).toFixed(2)) +
+            "{0} image(s) in cache using {1} mb of a maximum of {2} mb <br>".format(cacheInfo.numberOfImagesCached, (cacheInfo.cacheSizeInBytes / 1024 / 1024).toFixed(0), (cacheInfo.maximumSizeInBytes / 1024 / 1024).toFixed(0))
+        );
+    }
+
+    function nextImage() {
+        $('#prevbtn').removeClass('disabled');
+        var jelement = $("#im1");
+        var element = jelement.get(0);
+        if (currentImage < maxImage) {
+            currentImage += 1;
+            cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image) {
+                if (currentImage < 300) {
+                    nextImage();
+                }
+                changeImage(jelement, element, image, urls[currentImage]);
+                if (currentImage === maxImage) {
+                    $('#nextbtn').addClass('disabled');
+                }
+            });
+        }
+    }
+
+    function prevImage() {
+        $('#nextbtn').removeClass('disabled');
+        var jelement = $("#im1");
+        var element = jelement.get(0);
+        if (currentImage > 0) {
+            currentImage -= 1;
+            cornerstone.loadAndCacheImage(urls[currentImage]).then(function(image) {
+                changeImage(jelement, element, image, urls[currentImage]);
+                if (currentImage === 0) {
+                    $('#prevbtn').addClass('disabled');
+                }
+            });
+        }
+    }
+
+    function clearAllBtn() {
+        $('#lengthbtn').removeClass('btn-primary').addClass('btn-default');
+        $('#anglebtn').removeClass('btn-primary').addClass('btn-default');
+        $('#pickerbtn').removeClass('btn-primary').addClass('btn-default');
+        $('#wlbtn').removeClass('btn-primary').addClass('btn-default');
+        $('#stackbtn').removeClass('btn-primary').addClass('btn-default');
+        $('#movebtn').removeClass('btn-primary').addClass('btn-default');
+    }
+
+    function setupDicomViewer() {
+        cornerstone.imageCache.setMaximumSizeBytes(1000 * 1024 * 1024);
+        cornerstoneDCMJ2KImageLoader.setProgressCallback(progressCallback);
+        // This is just a demo, but I need to find a better way to pass images list.
+        var quality = getParameterByName(location.search, 'quality');
+        if (quality === '') {
+            quality = 1;
+        }
+        for (var i = 0; i <= maxImage; i++) {
+            var s = "000000000" + i;
+            var filename = "/data/" + s.substr(s.length - 6) + ".dcm?quality=" + quality;
+            urls.push("dcmj2k:" + filename);
+            cornerstone.loadAndCacheImage(urls[i]);
+        }
+        var jelement = $("#im1");
+        var element = jelement.get(0);
+        cornerstone.enable(element);
+
+        jelement.on('mousewheel DOMMouseScroll', function(e) {
+            if (e.originalEvent.wheelDelta < 0 || e.originalEvent.detail > 0) {
+                prevImage();
+            } else {
+                nextImage();
+            }
+            return false;
+        });
+
+        $('#wlbtn').click(function() {
+            clearAllBtn();
+            $(this).removeClass('btn-default').addClass('btn-primary');
+            var jelement = $("#im1");
+            var element = jelement.get(0);
+            disableAllTools(element);
+            cornerstoneTools.wwwcTouchDrag.activate(element);
+        });
+
+        $('#nextbtn').click(function() {
+            nextImage();
+        });
+
+        $('#pickerbtn').click(function() {
+            clearAllBtn();
+            $(this).removeClass('btn-default').addClass('btn-primary');
+            var jelement = $("#im1");
+            var element = jelement.get(0);
+            disableAllTools(element);
+            cornerstoneTools.probe.activate(element, 1);
+        });
+
+        $('#movebtn').click(function() {
+            clearAllBtn();
+            $(this).removeClass('btn-default').addClass('btn-primary');
+            var jelement = $("#im1");
+            var element = jelement.get(0);
+            disableAllTools(element);
+            cornerstoneTools.panTouchDrag.activate(element);
+        });
+
+        $('#stackbtn').click(function() {
+            clearAllBtn();
+            $(this).removeClass('btn-default').addClass('btn-primary');
+            var jelement = $("#im1");
+            var element = jelement.get(0);
+            disableAllTools(element);
+            cornerstoneTools.touchDragTool(stackOnDrag).activate(element);
+        });
+
+        $('#anglebtn').click(function() {
+            clearAllBtn();
+            $(this).removeClass('btn-default').addClass('btn-primary');
+            var jelement = $("#im1");
+            var element = jelement.get(0);
+            disableAllTools(element);
+            cornerstoneTools.angle.activate(element, 1);
+        });
+
+        $('#lengthbtn').click(function() {
+            clearAllBtn();
+            $(this).removeClass('btn-default').addClass('btn-primary');
+            var jelement = $("#im1");
+            var element = jelement.get(0);
+            disableAllTools(element);
+            cornerstoneTools.length.activate(element, 1);
+        });
+
+        $('#prevbtn').click(function() {
+            prevImage();
+        });
+
+        $('#stats').on("click", function() {
+            $('#statsModal').modal('show');
+        });
+
+
+        $('#savebtn').on("click", function() {
+            var blob = new Blob([JSON.stringify(perfStats, null, ' ')], {
+                type: "text/plain;charset=utf-8"
+            });
+            saveAs(blob, "perfstats.json");
+        });
+
+        //load first
+        cornerstone.loadAndCacheImage(urls[0]).then(function(image) {
+            perfStats.firstImageTime = Date.now();
+            changeImage(jelement, element, image, urls[0]);
+            cornerstoneTools.mouseInput.enable(element);
+            cornerstoneTools.mouseWheelInput.enable(element);
+            cornerstoneTools.pan.activate(element, 2); // pan is the default tool for middle mouse button
+            cornerstoneTools.zoom.activate(element, 4); // zoom is the default tool for right mouse button
+            cornerstoneTools.probe.enable(element);
+            cornerstoneTools.length.enable(element);
+            cornerstoneTools.ellipticalRoi.enable(element);
+            cornerstoneTools.rectangleRoi.enable(element);
+            cornerstoneTools.angle.enable(element);
+
+            cornerstoneTools.touchInput.enable(element);
+            cornerstoneTools.zoomTouchPinch.activate(element);
+            cornerstoneTools.wwwcTouchDrag.activate(element);
+            nextImage();
+        });
+    }
+
+    $(document).ready(function() {
+        pageReadyTime = Date.now();
+        setupDicomViewer();
+    });
+</script>
+</head>
+
+<body>
+
+
+
+    <div class="container-fluid" style="max-width:650px;">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4>DICOM-J2K viewer</h4>
+            </div>
+            <div class="panel-body center-block">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                        <div id="im1" data-index="0" style="width:512px;height:512px;position:relative" class="cornerstone-enabled-image center-block" oncontextmenu="return false" unselectable='on' onselectstart='return false;' onmousedown='return false;'>
+                            <div class="topleft" style="position: absolute;top:7px; left:7px; color: #fff;line-height: 100%;">
+                            </div>
+                            <div class="topright" style="position: absolute;top:7px; right:7px; color: #fff;line-height: 100%;">
+                            </div>
+                            <div class="bottomright" style="position: absolute;bottom:7px; right:7px; color: #fff;line-height: 100%;">
+                            </div>
+                            <div class="bottomleft" style="position: absolute;bottom:7px; left:7px; color: #fff;line-height: 100%;">
+                            </div>
+                        </div>
+                        <div id="progress-bar-container" class="progress progress-striped active center-block" style="width:512px">
+                            <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row center-block">
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2 text-right">
+                        <button id="prevbtn" type="button" class="btn btn-default disabled">
+                            <span class="glyphicon glyphicon-chevron-left" />
+                        </button>
+                    </div>
+
+                    <div class="col-xs-8 col-sm-8 col-md-8 col-lg-8 text-center">
+                        <div class="btn-group ">
+                            <button id="wlbtn" type="button" class="btn btn-primary">
+                                <span class="glyphicon icon-dicom-contrast"></span>
+                            </button>
+                            <button id="pickerbtn" type="button" class="btn btn-default">
+                                <span class="glyphicon glyphicon-screenshot"></span>
+                            </button>
+                            <button id="lengthbtn" type="button" class="btn btn-default">
+                                <span class="glyphicon icon-dicom-length"></span>
+                            </button>
+                            <button id="anglebtn" type="button" class="btn btn-default">
+                                <span class="glyphicon icon-dicom-angle"></span>
+                            </button>
+                            <button id="stackbtn" type="button" class="btn btn-default">
+                                <span class="glyphicon icon-dicom-stack"></span>
+                            </button>
+                            <button id="movebtn" type="button" class="btn btn-default">
+                                <span class="glyphicon icon-dicom-move"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2 text-left">
+                        <button id="nextbtn" type="button" class="btn btn-default">
+                            <span class="glyphicon glyphicon-chevron-right"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer text-right">
+                <a href="#" data-toggle="modal" data-target="#aboutModal">About</a> &nbsp;-&nbsp;
+                <a id="stats" href="javascript:void(0)">Stats</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- stats -->
+    <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModal" aria-hidden="true">
+
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">Global performance stats</h4>
+                </div>
+                <div class="modal-body" id='innerStats'></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="savebtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- about -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">About</h4>
+                </div>
+                <div class="modal-body" id='innerStats'>
+                    Prototype by Jean-Francois Pambrun (<a href="https://github.com/jpambrun">GitHub</a>,&nbsp;
+                    <a href="http://ca.linkedin.com/in/jpambrun">LinkedIn</a>)
+                    <H6>Third party libraries</H6>
+                    <a href="https://github.com/mozilla/pdf.js">PDF.js</a> for the j2k decoding
+                    <br>
+                    <a href="https://github.com/chafey/cornerstone">Cornerstone</a> for the DICOM viewer framework
+                    <br> Bootstrap, JQuery, Filesaver.js
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

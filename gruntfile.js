@@ -89,6 +89,7 @@ module.exports = function (grunt) {
                 },
                 files: { // Dictionary of files
                     'dist/index.html': 'src/index.html', // 'destination': 'source'
+                    'dist/bench.html': 'src/bench.html', // 'destination': 'source'
                 }
             },
         },
@@ -192,7 +193,7 @@ module.exports = function (grunt) {
                 }, {
                     expand: true,
                     flatten: true,
-                    src: ['src/index.html'],
+                    src: ['src/*.html'],
                     dest: 'dist/',
                     filter: 'isFile'
                 }, {
@@ -240,16 +241,28 @@ module.exports = function (grunt) {
                     //delete: true // Careful this option could cause data loss, read the docs!
                 }
             }
+        },
+        shell: {
+            bench: {
+                command: 'go build -o dist/bench  -i src/go/main.go && cd dist && ./bench',
+                options: {
+                    execOptions: {
+                        maxBuffer: Infinity
+                    }
+                }
+
+            }
         }
     });
 
 
-    grunt.registerTask('dev', ['clean', 'jshint:dev', 'copy:dev']);
-    grunt.registerTask('prod', ['clean', 'uglify:prod', 'copy:prod', 'htmlmin:prod']);
+    grunt.registerTask('dev', ['jshint:dev', 'copy:dev']);
+    grunt.registerTask('prod', ['uglify:prod', 'copy:prod', 'htmlmin:prod']);
     grunt.registerTask('up', ['prod', 'rsync:up']);
     grunt.registerTask('serv', ['dev', 'connect:serv', 'watch:serv']);
     grunt.registerTask('beautify', ['jsbeautifier']);
     grunt.registerTask('hook', ['copy:hooks']);
+    grunt.registerTask('bench', ['dev', 'shell:bench']);
     grunt.registerTask('precommit', ['jsbeautifier:precommit', 'jshint:dev']);
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
@@ -259,7 +272,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-htmlmin');
+    grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-rsync');
     grunt.loadNpmTasks("grunt-jsbeautifier");
-
 };
