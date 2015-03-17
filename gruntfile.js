@@ -72,11 +72,7 @@ module.exports = function (grunt) {
                     cwd: 'src/js',
                     src: '**/*.js',
                     dest: 'dist/js'
-                }, {
-                    expand: true,
-                    src: 'ext/jpx-medical/*.js',
-                    dest: 'dist/js'
-                }, ]
+                }]
             }
         },
 
@@ -137,6 +133,9 @@ module.exports = function (grunt) {
                     dest: 'dist/css/',
                     filter: 'isFile'
                 }, {
+                    src: ['ext/jpx-medical/dist/jpx.min.js'],
+                    dest: 'dist/js/jpx.js',
+                }, {
                     expand: true,
                     flatten: true,
                     src: ['data/test*'],
@@ -181,7 +180,7 @@ module.exports = function (grunt) {
                 }, {
                     expand: true,
                     flatten: true,
-                    src: ['ext/jpx-medical/*.js'],
+                    src: ['ext/jpx-medical/dist/jpx.js'],
                     dest: 'dist/js/',
                     filter: 'isFile'
                 }, {

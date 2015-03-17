@@ -23,7 +23,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
 /*global parseImageId, JpxImage, dicomParser, PDFJS, self, importScripts, XMLHttpRequest, Uint8Array*/
 'use strict';
-importScripts('jpx.js', 'util.js', 'utils.js', 'arithmetic_decoder.js', 'dicomparser.js');
+importScripts('jpx.js', 'utils.js', 'dicomparser.js');
 
 var jpxImage = new JpxImage();
 var prefetchSize = 20000;

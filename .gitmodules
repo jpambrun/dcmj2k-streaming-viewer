@@ -1,7 +1,7 @@
 [submodule "ext/cornerstone"]
 	path = ext/cornerstone
-	url = git://github.com/jpambrun/cornerstone.git
+	url = https://github.com/jpambrun/cornerstone.git
   branch = feat-removeImageFromCache
 [submodule "ext/jpx-medical"]
 	path = ext/jpx-medical
-	url = git@github.com:jpambrun/jpx-medical.git
+	url = https://github.com/OHIF/image-JPEG2000.git
