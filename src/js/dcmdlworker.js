@@ -107,7 +107,7 @@ self.onmessage = function (e) {
         endTime = Date.now();
         stats.dicomParseTime += (endTime - startTime);
 
-        if (j2kStreamTruncationPoint > dcmData.length) {
+        if (dcmData.length === prefetchSize &&  j2kStreamTruncationPoint > dcmData.length) {
 
             startTime = Date.now();
             xhr = new XMLHttpRequest();
