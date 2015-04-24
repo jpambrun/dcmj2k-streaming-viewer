@@ -8,6 +8,7 @@ A standard compliant dcm-j2k streaming viewer prototype. See [demo](http://jpamb
 git submodule init
 git submodule update
 bower install
+npm install
 ```
 
 ## Streaming requirements
