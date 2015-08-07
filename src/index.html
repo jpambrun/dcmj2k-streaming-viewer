@@ -23,7 +23,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--- >
+-->
 <html>
 
 <head>
@@ -55,6 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 <script type="text/javascript">
     var maxImage = 499; //748;
     var currentImage = 0;
+    var maxLayer = 0;
     var urls = [];
     var pageReadyTime = 0;
     var viewTimerId;
@@ -120,7 +121,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         }
         window.clearTimeout(viewTimerId);
 
-        if (image.loadedLayers < image.parsedDicomData.numberOfLayers) {
+        if (image.loadedLayers <  Math.min(image.parsedDicomData.numberOfLayers, maxLayer)) {
             var parsedId = parseImageId(imageId);
             viewTimerId = window.setTimeout(function(msg) {
                 var newImageId = parsedId.scheme + ':' + parsedId.url + '?quality=' + (Number(parsedId.requestedQuality) + 1);
@@ -217,7 +218,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         // This is just a demo, but I need to find a better way to pass images list.
         for (var i = 0; i <= maxImage; i++) {
             var s = "000000000" + i;
-            var filename = "http://jpx.jfpb.net/data/" + s.substr(s.length - 6) + ".dcm?quality=1";
+            var filename = "../data/" + s.substr(s.length - 6) + ".dcm?quality=1";
             urls.push("dcmj2k:" + filename);
             cornerstone.loadAndCacheImage(urls[i]);
         }
@@ -415,7 +416,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         <span aria-hidden="true">&times;</span>
                         <span class="sr-only">Close</span>
                     </button>
-                    <h4 class="modal-title" id="myModalLabel">Global performance stats</h4>
+                    <h4 class="modal-title">Global performance stats</h4>
                 </div>
                 <div class="modal-body" id='innerStats'></div>
                 <div class="modal-footer">
@@ -435,9 +436,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         <span aria-hidden="true">&times;</span>
                         <span class="sr-only">Close</span>
                     </button>
-                    <h4 class="modal-title" id="myModalLabel">About</h4>
+                    <h4 class="modal-title">About</h4>
                 </div>
-                <div class="modal-body" id='innerStats'>
+                <div class="modal-body">
                     Prototype by Jean-Francois Pambrun (<a href="https://github.com/jpambrun">GitHub</a>,&nbsp;
                     <a href="http://ca.linkedin.com/in/jpambrun">LinkedIn</a>)
                     <H6>Third party libraries</H6>

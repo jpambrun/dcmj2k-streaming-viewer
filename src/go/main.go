@@ -15,7 +15,7 @@ import (
 )
 
 var link *linkio.Link
-var rate, latency int = 8 * 1024 * 1024 * 1000, 0
+var rate, latency int = 1024 * 1024 * 1000, 0 // 1000gbit, 0 ms
 
 type LimitedResponseWriter struct {
 	originalResponseWriter http.ResponseWriter
@@ -30,7 +30,11 @@ func (r LimitedResponseWriter) Write(in []byte) (int, error) {
 	buf := bytes.NewBuffer(in)
 	nWritten := 0
 	for nWritten < len(in) {
-		n, _ := io.Copy(r.w, buf)
+		n, err := io.Copy(r.w, buf)
+    //short write are expected with this rate limiting method
+    if err != nil && err != io.ErrShortWrite {
+      return nWritten, err
+    }
 		nWritten += int(n)
 	}
 	return nWritten, nil
@@ -48,10 +52,10 @@ func NewLimitedResponseWriter(w http.ResponseWriter) *LimitedResponseWriter {
 }
 
 func main() {
-	link = linkio.NewLink(100 * linkio.KilobytePerSecond)
-	http.HandleFunc("/", rateLimitedHandler)
-	//http.HandleFunc("/data/", rateLimitedHandler)
-	//http.HandleFunc("/", handler)
+  link = linkio.NewLink(linkio.Throughput(rate))
+	//http.HandleFunc("/", rateLimitedHandler)
+	http.HandleFunc("/data/", rateLimitedHandler)
+	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
@@ -72,8 +76,8 @@ func rateLimitedHandler(w http.ResponseWriter, r *http.Request) {
 		_, ok = strconv.Atoi(q["rate"][0])
 		if ok == nil {
 			rate, _ = strconv.Atoi(q["rate"][0])
-			rate = rate * 8 * 1024
-			link.SetThroughput(linkio.Throughput(rate))
+			rate = rate * 1024 // in kBytes
+			link.SetThroughput(linkio.Throughput(rate *6/5))
 		}
 	}
 
@@ -84,7 +88,9 @@ func rateLimitedHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	time.Sleep(time.Duration(latency) * time.Millisecond)
+  if(latency != 0){
+    time.Sleep(time.Duration(latency) * time.Millisecond)
+  }
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -94,15 +100,15 @@ func rateLimitedHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	fileStat, err := os.Stat(filePath)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("Rate limited serve %s with rate %d kbps and latency %d ms\n", filePath, rate/8/1024, latency)
+	//fileStat, err := os.Stat(filePath)
+	//if err != nil {
+		//fmt.Println(err)
+	//}
+	fmt.Printf("Rate limited serve %s with rate %d kbps and latency %d ms\n", filePath, rate/1024, latency)
 	_, filename := path.Split(filePath)
-	t := fileStat.ModTime()
-	fmt.Printf("time %+v\n", t)
-	http.ServeContent(lrw, r, filename, t, file)
+	//t := fileStat.ModTime()
+	//fmt.Printf("time %+v\n", t)
+  http.ServeContent(lrw, r, filename, time.Now(), file)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +120,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		filePath = "." + r.URL.Path
 	}
 
+	var ok error
+	q := r.URL.Query()
+
+	if (len(q["rate"])) != 0 {
+		_, ok = strconv.Atoi(q["rate"][0])
+		if ok == nil {
+			rate, _ = strconv.Atoi(q["rate"][0])
+			rate = rate * 1024
+			link.SetThroughput(linkio.Throughput(rate *6/5))
+		}
+	}
+
+	if (len(q["latency"])) != 0 {
+		_, ok = strconv.Atoi(q["latency"][0])
+		if ok == nil {
+			latency, _ = strconv.Atoi(q["latency"][0])
+		}
+	}
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Printf("%s not found\n", filePath)
