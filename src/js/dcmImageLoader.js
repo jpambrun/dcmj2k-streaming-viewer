@@ -40,7 +40,10 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
     var workerPool;
     var workerMessageQueue = [];
     var workerReady = [];
-    var numWorker = 8;
+    var numWorker = getParameterByName(location.search, 'worker');
+    if (numWorker === '') {
+      numWorker = 8;
+    }
     if (workerPool === undefined) {
         workerPool = [];
         for (var i = 0; i < numWorker; i++) {

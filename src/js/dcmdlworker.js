@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 importScripts('jpx.js', 'utils.js', 'dicomparser.js');
 
 var jpxImage = new JpxImage();
-var prefetchSize = 22000;
+var prefetchSize = 5000;
 
 
 self.onmessage = function (e) {
