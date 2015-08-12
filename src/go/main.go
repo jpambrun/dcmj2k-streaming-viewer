@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"runtime"
 	"fmt"
+  "github.com/nytimes/gziphandler"
 	"github.com/ian-kent/linkio"
 	"io"
 	"log"
@@ -55,9 +56,10 @@ func NewLimitedResponseWriter(w http.ResponseWriter) *LimitedResponseWriter {
 func main() {
   runtime.GOMAXPROCS(runtime.NumCPU())
   link = linkio.NewLink(linkio.Throughput(rate))
-	//http.HandleFunc("/", rateLimitedHandler)
+  gzipHandler := gziphandler.GzipHandler(http.HandlerFunc(handler))
 	http.HandleFunc("/data/", rateLimitedHandler)
-	http.HandleFunc("/", handler)
+	http.Handle("/", gzipHandler)
+  http.Handle("/data/manifest.json", gzipHandler)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
