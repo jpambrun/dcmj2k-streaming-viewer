@@ -148,7 +148,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 $('#progress-bar').width((++perfStats.progress / (maxImage - 1)) * 100 + '%');
 
 
-                perfStats.image300Time = Date.now();
 
                 if (perfStats.progress == maxImage - 1) {
                     $('#progress-bar-container').css('visibility', 'hidden');
@@ -164,6 +163,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             var cacheInfo = cornerstone.imageCache.getCacheInfo();
 
 
+            if (perfStats.progress === 300) {
+                perfStats.image300Time = Date.now();
+                $('#innerHiddenStats').html(
+                    "{0}, {1}, {2}, {3},{4}".format(
+                        (perfStats.firstImageTime - pageReadyTime).toFixed(2), (perfStats.image300Time - pageReadyTime).toFixed(2), (perfStats.totalInitialDecodeTime / perfStats.progress).toFixed(2), (perfStats.totalInitialDownloadTime / perfStats.progress).toFixed(2), (perfStats.totalInitialSize / 1024 / perfStats.progress).toFixed(2)
+                    )
+                );
+
             $('#innerStats').html(
                 "Total initial downlaod time: {0} s (Avr: {1} ms) <br>".format((perfStats.totalInitialDownloadTime / 1000).toFixed(2), (perfStats.totalInitialDownloadTime / perfStats.progress).toFixed(2)) +
                 "Total initial dicom paring time: {0} s (Avr: {1} ms) <br>".format((perfStats.totalInitialDicomParsingTime / 1000).toFixed(2), (perfStats.totalInitialDicomParsingTime / perfStats.progress).toFixed(2)) +
@@ -177,12 +184,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 "Time to finish initial downlaod and decode for all slices : {0} ms <br>".format((perfStats.decodeCompleteTime - pageReadyTime).toFixed(2)) +
                 "{0} image(s) in cache using {1} mb of a maximum of {2} mb <br>".format(cacheInfo.numberOfImagesCached, (cacheInfo.cacheSizeInBytes / 1024 / 1024).toFixed(0), (cacheInfo.maximumSizeInBytes / 1024 / 1024).toFixed(0))
             );
-            if (perfStats.progress >= 300) {
-                $('#innerHiddenStats').html(
-                    "{0}, {1}, {2}, {3},{4}".format(
-                        (perfStats.firstImageTime - pageReadyTime).toFixed(2), (perfStats.image300Time - pageReadyTime).toFixed(2), (perfStats.totalInitialDecodeTime / perfStats.progress).toFixed(2), (perfStats.totalInitialDownloadTime / perfStats.progress).toFixed(2), (perfStats.totalInitialSize / 1024 / perfStats.progress).toFixed(2)
-                    )
-                );
                 setTimeout(function() {
                     document.title = "done";
                 }, 200);
