@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"runtime"
 	"fmt"
 	"github.com/ian-kent/linkio"
 	"io"
@@ -52,11 +53,12 @@ func NewLimitedResponseWriter(w http.ResponseWriter) *LimitedResponseWriter {
 }
 
 func main() {
+  runtime.GOMAXPROCS(runtime.NumCPU())
   link = linkio.NewLink(linkio.Throughput(rate))
 	//http.HandleFunc("/", rateLimitedHandler)
 	http.HandleFunc("/data/", rateLimitedHandler)
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
 func rateLimitedHandler(w http.ResponseWriter, r *http.Request) {

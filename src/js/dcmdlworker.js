@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 importScripts('jpx.js', 'utils.js', 'dicomparser.js');
 
 var jpxImage = new JpxImage();
-var prefetchSize = 20000;
+var prefetchSize = 22000;
 
 
 self.onmessage = function (e) {
@@ -90,14 +90,10 @@ self.onmessage = function (e) {
         };
 
         if (dataSet.elements.x00691011 !== undefined) {
-            for (var i = 1; i < 3 || dataSet.uint32('x0069101' + (i + 1)) !== 0; i++) {
-                parsedDicomData.numberOfLayers = i;
+            for (var i = 2; dataSet.uint32('x0069101' + i ) !== undefined && dataSet.uint32('x0069101' + i) !== 0  ; i++) {
+                parsedDicomData.numberOfLayers = i-1;
+                parsedDicomData.layers.push(dataSet.uint32('x0069101' + i ));
             }
-            parsedDicomData.layers = [
-                dataSet.uint32('x00691012'),
-                dataSet.uint32('x00691013'),
-                dataSet.uint32('x00691014')
-            ];
             var layerOffset = parsedDicomData.layers[parsedId.requestedQuality - 1];
             j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + layerOffset;
         } else {
