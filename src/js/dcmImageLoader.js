@@ -42,7 +42,7 @@ var cornerstoneDCMJ2KImageLoader = (function ($, cornerstone, cornerstoneDCMJ2KI
     var workerReady = [];
     var numWorker = getParameterByName(location.search, 'worker');
     if (numWorker === '') {
-      numWorker = 8;
+        numWorker = 8;
     }
     if (workerPool === undefined) {
         workerPool = [];

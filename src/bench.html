@@ -241,9 +241,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         if (quality === '') {
             quality = 1;
         }
-        for (var i = 0; i <= maxImage; i++) {
-            var s = "000000000" + i;
-            var filename = "/data/" + s.substr(s.length - 6) + ".dcm?quality=" + quality;
+
+        var request = new XMLHttpRequest();
+        request.open('GET', '/data/manifest.json', false);
+        request.send(null);
+        if (request.status !== 200) {
+            console.error("NO AMNIFEST");
+        }
+        dicomEntries = JSON.parse(request.responseText);
+
+        for(var i = 0; i < dicomEntries.length;i++ ){
+            var truncation = "&truncationPoints=";
+            for(var j = 0; j < dicomEntries[i].truncationPoints.length;j++ ){
+              truncation = truncation + dicomEntries[i].truncationPoints[j] + ',';
+            }
+            var filename = "/data/" + dicomEntries[i].filename +"?quality=" + quality + truncation;
             urls.push("dcmj2k:" + filename);
             cornerstone.loadAndCacheImage(urls[i]);
         }

@@ -48,16 +48,19 @@ function parseImageId(imageId) {
     var scheme = imageId.substring(0, colonIndex);
     var url;
     var requestedQuality;
+    var truncationPoints;
 
     if (qmarkIndex === -1) {
         url = imageId.substring(colonIndex + 1);
     } else {
         url = imageId.substring(colonIndex + 1, qmarkIndex);
         requestedQuality = getParameterByName(imageId, 'quality');
+        truncationPoints = getParameterByName(imageId, 'truncationPoints').split(',').map(Number);
     }
     return {
         scheme: scheme,
         url: url,
         requestedQuality: Number(requestedQuality),
+        truncationPoints: truncationPoints,
     };
 }

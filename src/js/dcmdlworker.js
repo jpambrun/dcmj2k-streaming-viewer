@@ -50,6 +50,11 @@ self.onmessage = function (e) {
         isUpdate: NaN,
     };
 
+    //TODO configurable and more elegant.
+    if(true && parsedId.truncationPoints[0].length > 1){
+      prefetchSize = parsedId.truncationPoints[0] + parsedId.truncationPoints[parsedId.requestedQuality];
+    }
+
 
     if (e.data.oldDcmData === undefined) {
         stats.isUpdate = false;
@@ -90,9 +95,9 @@ self.onmessage = function (e) {
         };
 
         if (dataSet.elements.x00691011 !== undefined) {
-            for (var i = 2; dataSet.uint32('x0069101' + i ) !== undefined && dataSet.uint32('x0069101' + i) !== 0  ; i++) {
-                parsedDicomData.numberOfLayers = i-1;
-                parsedDicomData.layers.push(dataSet.uint32('x0069101' + i ));
+            for (var i = 2; dataSet.uint32('x0069101' + i) !== undefined && dataSet.uint32('x0069101' + i) !== 0; i++) {
+                parsedDicomData.numberOfLayers = i - 1;
+                parsedDicomData.layers.push(dataSet.uint32('x0069101' + i));
             }
             var layerOffset = parsedDicomData.layers[parsedId.requestedQuality - 1];
             j2kStreamTruncationPoint = parsedDicomData.imageBaseOffset + layerOffset;
@@ -103,7 +108,7 @@ self.onmessage = function (e) {
         endTime = Date.now();
         stats.dicomParseTime += (endTime - startTime);
 
-        if (dcmData.length === prefetchSize &&  j2kStreamTruncationPoint > dcmData.length) {
+        if (dcmData.length === prefetchSize && j2kStreamTruncationPoint > dcmData.length) {
 
             startTime = Date.now();
             xhr = new XMLHttpRequest();
