@@ -51,7 +51,7 @@ self.onmessage = function (e) {
     };
 
     //TODO configurable and more elegant.
-    if (true && parsedId.truncationPoints[0].length > 1) {
+    if (true && parsedId.truncationPoints.length > 1) {
         prefetchSize = parsedId.truncationPoints[0] + parsedId.truncationPoints[parsedId.requestedQuality];
     }
 
