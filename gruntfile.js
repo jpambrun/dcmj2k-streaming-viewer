@@ -136,6 +136,9 @@ module.exports = function (grunt) {
                     src: ['ext/jpx-medical/dist/jpx.min.js'],
                     dest: 'dist/js/jpx.js',
                 }, {
+                    src: ['ext/libopenjpeg/dist/libopenjpeg.js'],
+                    dest: 'dist/js/libopenjpeg.js',
+                }, {
                     expand: true,
                     flatten: true,
                     src: ['data/test*'],
@@ -181,6 +184,12 @@ module.exports = function (grunt) {
                     expand: true,
                     flatten: true,
                     src: ['ext/jpx-medical/dist/jpx.js'],
+                    dest: 'dist/js/',
+                    filter: 'isFile'
+                }, {
+                    expand: true,
+                    flatten: true,
+                    src: ['ext/libopenjpeg/dist/libopenjpeg.js'],
                     dest: 'dist/js/',
                     filter: 'isFile'
                 }, {

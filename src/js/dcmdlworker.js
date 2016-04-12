@@ -21,13 +21,22 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  */
 
-/*global parseImageId, JpxImage, dicomParser, PDFJS, self, importScripts, XMLHttpRequest, Uint8Array*/
+/*global parseImageId, JpxImage, dicomParser, PDFJS, self, importScripts, XMLHttpRequest, Uint8Array, Module, Int16Array*/
 'use strict';
-importScripts('jpx.js', 'utils.js', 'dicomparser.js');
 
-var jpxImage = new JpxImage();
+
 var prefetchSize = 5000;
 
+
+var useJPX = false;
+
+if(useJPX){
+    importScripts('jpx.js', 'utils.js', 'dicomparser.js');
+    var jpxImage = new JpxImage();
+}else{
+    importScripts('libopenjpeg.js', 'utils.js', 'dicomparser.js');
+    var image;
+}
 
 self.onmessage = function (e) {
     var loadedLayers;
@@ -51,7 +60,7 @@ self.onmessage = function (e) {
     };
 
     //TODO configurable and more elegant.
-    if (true && parsedId.truncationPoints.length > 1) {
+    if (false && parsedId.truncationPoints.length > 1) {
         prefetchSize = parsedId.truncationPoints[0] + parsedId.truncationPoints[parsedId.requestedQuality];
     }
 
@@ -169,16 +178,26 @@ self.onmessage = function (e) {
     }
 
     startTime = Date.now();
-    jpxImage.parse(jpxData);
+    if(useJPX){
+        jpxImage.parse(jpxData);
+    }else{
+        image = Module.opj_decode(jpxData);
+    }
     endTime = Date.now();
     stats.j2kDecodeTime += (endTime - startTime);
 
-    var width = jpxImage.width;
-    var height = jpxImage.height;
-    var componentsCount = jpxImage.componentsCount;
-    var tileCount = jpxImage.tiles.length;
-    var tileComponents = jpxImage.tiles[0];
-    var pixelData = tileComponents.items;
+    var width;
+    var height;
+    var pixelData;
+    if(useJPX){
+        width = jpxImage.width;
+        height = jpxImage.height;
+        pixelData = jpxImage.tiles[0].items;
+    }else{
+        width = image.sx;
+        height = image.sy;
+        pixelData = new Int16Array(image.pixelData);
+    }
     self.postMessage({
         workerId: e.data.workerId,
         pixelData: pixelData.buffer,
