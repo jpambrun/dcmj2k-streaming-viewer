@@ -81,7 +81,7 @@ func rateLimitedHandler(w http.ResponseWriter, r *http.Request) {
 		if ok == nil {
 			rate, _ = strconv.Atoi(q["rate"][0])
 			rate = rate * 1024 // in kBytes
-			link.SetThroughput(linkio.Throughput(rate *6/5))
+			link.SetThroughput(linkio.Throughput(rate))
 		}
 	}
 
@@ -132,7 +132,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if ok == nil {
 			rate, _ = strconv.Atoi(q["rate"][0])
 			rate = rate * 1024
-			link.SetThroughput(linkio.Throughput(rate *6/5))
+			link.SetThroughput(linkio.Throughput(rate))
 		}
 	}
 
