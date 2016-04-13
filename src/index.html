@@ -218,7 +218,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             // This is just a demo, but I need to find a better way to pass images list.
             for (var i = 0; i <= maxImage; i++) {
                 var s = "000000000" + i;
-                var filename = "../data/" + s.substr(s.length - 6) + ".dcm?quality=1";
+                var filename = "https://jpx.jfpb.net/data/" + s.substr(s.length - 6) + ".dcm?quality=1";
                 urls.push("dcmj2k:" + filename);
                 cornerstone.loadAndCacheImage(urls[i]);
             }
