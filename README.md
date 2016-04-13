@@ -19,3 +19,17 @@ These truncation points are currently passed using private DICOM tags:
 (0069,1013) truncation offset of layer 2
 (0069,1013) truncation offset of layer 3
 ```
+
+### OPJ vs. JPX benchmark
+On a 3 core VM
+
+| Decoder | Quality layer |  Browser  | avr decode (ms) |
+|---------|---------------| --------- |----------------:| 
+|   OPJ   |         1     |   Chrome  |      32.79      |
+|         |         1     |   Firefox |      22.05      |
+|         |         2     |   Chrome  |      62.66      |
+|         |         2     |   Firefox |      36.87      |
+|   JPX   |         1     |   Chrome  |      58.70      |
+|         |         1     |   Firefox |      57.60      |
+|         |         2     |   Chrome  |      96.54      |
+|         |         2     |   Firefox |      87.88      |
